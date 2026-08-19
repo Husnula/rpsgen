@@ -957,12 +957,36 @@ ATURAN:
 
   const handleExportPdf = (documentType) => {
     const config = getDocumentConfig(documentType);
-    const element = document.getElementById(config.elementId);
-    if (!element) return;
+    const originalElement = document.getElementById(config.elementId);
+    if (!originalElement) return;
 
     const key = `${documentType}-pdf`;
     setExportingKey(key);
     setError(null);
+
+    // Create a clone to sanitize unsupported CSS functions like oklch for html2canvas
+    const clone = originalElement.cloneNode(true);
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.appendChild(clone);
+    document.body.appendChild(container);
+
+    // html2canvas throws errors on Tailwind v4's oklch/oklab colors
+    const elements = [clone, ...clone.querySelectorAll('*')];
+    elements.forEach((el) => {
+      const computed = window.getComputedStyle(el);
+      const colorProps = ['color', 'backgroundColor', 'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'];
+      colorProps.forEach((prop) => {
+        const val = computed[prop];
+        if (val && (val.includes('oklch') || val.includes('oklab') || val.includes('color('))) {
+          if (prop === 'backgroundColor') el.style[prop] = el.tagName.toLowerCase() === 'th' ? '#f3f4f6' : '#ffffff';
+          else if (prop === 'color') el.style[prop] = '#1e293b';
+          else el.style[prop] = '#000000';
+        }
+      });
+    });
 
     const opt = {
       margin: [10, 10, 10, 10], // margin in mm
@@ -973,16 +997,19 @@ ATURAN:
     };
 
     if (window.html2pdf) {
-      window.html2pdf().set(opt).from(element).save().then(() => {
+      window.html2pdf().set(opt).from(clone).save().then(() => {
         setExportingKey('');
+        document.body.removeChild(container);
       }).catch((err) => {
         console.error('PDF export failed:', err);
         setError(`Ekspor PDF ${config.label} gagal: ${err.message}`);
         setExportingKey('');
+        document.body.removeChild(container);
       });
     } else {
       setError('Library PDF belum siap. Coba lagi dalam beberapa detik.');
       setExportingKey('');
+      document.body.removeChild(container);
     }
   };
 
