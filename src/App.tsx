@@ -701,7 +701,8 @@ ATURAN:
 3. Setiap Sub-CPMK wajib muncul minimal satu kali pada minggu non-ujian.
 4. Materi/bahan kajian setiap minggu harus langsung mendukung Sub-CPMK pada baris yang sama; jangan memasukkan materi di luar lingkup CPMK.
 5. Indikator harus memakai perilaku yang dapat diamati dan selaras dengan KKO Sub-CPMK. Kriteria/bentuk penilaian harus benar-benar mengukur indikator tersebut.
-6. Total bobot nilai = 100%.`;
+6. Total bobot nilai = 100%.
+7. PENTING: Anda WAJIB mengisi objek 'metode_luring' (dengan field 'bentuk', 'metode', 'alokasi') dan 'metode_daring' untuk setiap pertemuan minggu (selain ujian). Tidak boleh dikosongkan!`;
 
       const data2raw = await callGemini(prompt2, schema2, apiKeys);
       
@@ -955,10 +956,34 @@ ATURAN:
   };
 
   const handleExportPdf = (documentType) => {
-    // Native print is much more reliable and produces selectable text
-    // The user can simply choose "Save as PDF" in the print dialog
-    window.focus();
-    window.print();
+    const config = getDocumentConfig(documentType);
+    const element = document.getElementById(config.elementId);
+    if (!element) return;
+
+    const key = `${documentType}-pdf`;
+    setExportingKey(key);
+    setError(null);
+
+    const opt = {
+      margin: [10, 10, 10, 10], // margin in mm
+      filename: `${config.filename}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: config.orientation }
+    };
+
+    if (window.html2pdf) {
+      window.html2pdf().set(opt).from(element).save().then(() => {
+        setExportingKey('');
+      }).catch((err) => {
+        console.error('PDF export failed:', err);
+        setError(`Ekspor PDF ${config.label} gagal: ${err.message}`);
+        setExportingKey('');
+      });
+    } else {
+      setError('Library PDF belum siap. Coba lagi dalam beberapa detik.');
+      setExportingKey('');
+    }
   };
 
   const copyComputedStyles = (source, target) => {
@@ -1926,6 +1951,24 @@ ATURAN:
             </tbody>
           </table>
 
+          {/* CATATAN LEGEND */}
+          <div className="mt-12 text-[8pt] text-left break-inside-avoid">
+            <div className="font-bold mb-1">Catatan:</div>
+            <ol className="list-decimal list-outside ml-4 space-y-1">
+              <li><strong>Capaian Pembelajaran Lulusan PRODI (CPL-PRODI)</strong> adalah kemampuan yang dimiliki oleh setiap lulusan PRODI yang merupakan internalisasi dari sikap, penguasaan pengetahuan dan ketrampilan sesuai dengan jenjang prodinya yang diperoleh melalui proses pembelajaran.</li>
+              <li><strong>CPL yang dibebankan pada mata kuliah</strong> adalah beberapa capaian pembelajaran lulusan program studi (CPL-PRODI) yang digunakan untuk pembentukan/pengembangan sebuah mata kuliah yang terdiri dari aspek sikap, ketrampulan umum, ketrampilan khusus dan pengetahuan.</li>
+              <li><strong>CP Mata kuliah (CPMK)</strong> adalah kemampuan yang dijabarkan secara spesifik dari CPL yang dibebankan pada mata kuliah, dan bersifat spesifik terhadap bahan kajian atau materi pembelajaran mata kuliah tersebut.</li>
+              <li><strong>Sub-CP Mata kuliah (Sub-CPMK)</strong> adalah kemampuan yang dijabarkan secara spesifik dari CPMK yang dapat diukur atau diamati dan merupakan kemampuan akhir yang direncanakan pada tiap tahap pembelajaran, dan bersifat spesifik terhadap materi pembelajaran mata kuliah tersebut.</li>
+              <li><strong>Indikator penilaian</strong> kemampuan dalam proses maupun hasil belajar mahasiswa adalah pernyataan spesifik dan terukur yang mengidentifikasi kemampuan atau kinerja hasil belajar mahasiswa yang disertai bukti-bukti.</li>
+              <li><strong>Kreteria Penilaian</strong> adalah patokan yang digunakan sebagai ukuran atau tolok ukur ketercapaian pembelajaran dalam penilaian berdasarkan indikator-indikator yang telah ditetapkan. Kreteria penilaian merupakan pedoman bagi penilai agar penilaian konsisten dan tidak bias. Kreteria dapat berupa kuantitatif ataupun kualitatif.</li>
+              <li><strong>Bentuk penilaian:</strong> tes dan non-tes.</li>
+              <li><strong>Bentuk pembelajaran:</strong> Kuliah, Responsi, Tutorial, Seminar atau yang setara, Praktikum, Praktik Studio, Praktik Bengkel, Praktik Lapangan, Penelitian, Pengabdian Kepada Masyarakat dan/atau bentuk pembelajaran lain yang setara.</li>
+              <li><strong>Metode Pembelajaran:</strong> Small Group Discussion, Role-Play &amp; Simulation, Discovery Learning, Self-Directed Learning, Cooperative Learning, Collaborative Learning, Contextual Learning, Project Based Learning, dan metode lainnya yg setara.</li>
+              <li><strong>Materi Pembelajaran</strong> adalah rincian atau uraian dari bahan kajian yg dapat disajikan dalam bentuk beberapa pokok dan sub-pokok bahasan.</li>
+              <li><strong>Bobot penilaian</strong> adalah prosentasi penilaian terhadap setiap pencapaian sub-CPMK yang besarnya proposional dengan tingkat kesulitan pencapaian sub-CPMK tsb., dan totalnya 100%.</li>
+              <li><strong>TM</strong> = Tatap Muka, <strong>PT</strong> = Penugasan Terstruktur, <strong>BM</strong> = Belajar Mandiri.</li>
+            </ol>
+          </div>
         </div>
       </div>
 
