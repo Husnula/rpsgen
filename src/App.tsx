@@ -565,7 +565,7 @@ Berikan HANYA teks deskripsinya saja dalam 1-2 paragraf, gaya bahasa formal akad
       const enhancedText = await callGemini(prompt, null, apiKeys);
       setFormData((prev) => ({ ...prev, description: enhancedText }));
     } catch (err) {
-      setError('Gagal melakukan Enhance AI pada deskripsi. Pastikan koneksi internet Anda stabil.');
+      setError(err.message || 'Gagal melakukan Enhance AI pada deskripsi. Pastikan koneksi internet Anda stabil.');
     } finally {
       setIsEnhancing(false);
     }
