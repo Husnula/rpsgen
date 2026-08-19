@@ -950,8 +950,8 @@ ATURAN:
       elementId: isBlueprint ? 'blueprint-document' : 'rps-document',
       label: isBlueprint ? 'Blueprint Penilaian' : 'RPS',
       filename: `${prefix}_${safeFilePart(formData.mkName)}_${safeFilePart(formData.mkCode)}`,
-      orientation: 'landscape',
-      exportWidth: 1122,
+      orientation: isBlueprint ? 'portrait' : 'landscape',
+      exportWidth: isBlueprint ? 794 : 1122,
     };
   };
 
