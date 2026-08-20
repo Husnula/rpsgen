@@ -22,6 +22,7 @@ import { Settings } from 'lucide-react';
 import SettingsModal from './components/SettingsModal';
 import { callGeminiWithFallback } from './services/geminiApi';
 import { lecturers, courses, cplBank, allCplFlat, metodeLegend } from './data/masterData';
+import panduanRpsRaw from '../panduan-RPS-template.md?raw';
 
 // ============================================================
 // API KEY INJECTION 
@@ -151,13 +152,13 @@ const chunkArray = (items = [], size = 1) => {
 const normalizeLearningOutcomeCodes = (data = {}) => {
   const cpmkCodeMap = new Map();
   const normalizedCpmk = (data.cpmk || []).map((item, index) => {
-    const kode = `CPMK-${index + 1}`;
+    const kode = item.kode || `CPMK-${index + 1}`;
     cpmkCodeMap.set(item.kode, kode);
     return { ...item, kode };
   });
   const normalizedSubCpmk = (data.sub_cpmk || []).map((item, index) => ({
     ...item,
-    kode: `Sub-CPMK-${index + 1}`,
+    kode: item.kode || `Sub-CPMK-${index + 1}`,
     cpmk_ref: cpmkCodeMap.get(item.cpmk_ref) || item.cpmk_ref,
   }));
   return { ...data, cpmk: normalizedCpmk, sub_cpmk: normalizedSubCpmk };
@@ -675,10 +676,18 @@ TUGAS:
                   properties: {
                     bentuk: { type: 'STRING' },
                     metode: { type: 'STRING' },
+                    penugasan: { type: 'STRING' },
                     alokasi: { type: 'STRING' }
                   }
                 },
-                metode_daring: { type: 'STRING' },
+                metode_daring: { 
+                  type: 'OBJECT',
+                  properties: {
+                    bentuk: { type: 'STRING' },
+                    metode: { type: 'STRING' },
+                    penugasan: { type: 'STRING' }
+                  }
+                },
                 materi: { type: 'STRING' },
                 bobot_nilai: { type: 'STRING' },
                 task_required: { type: 'BOOLEAN' },
@@ -695,21 +704,30 @@ TUGAS:
 CPMK: ${cpmkListText}
 Sub-CPMK: ${subCpmkListText}
 
+PANDUAN INSTITUSI STIKES:
+${panduanRpsRaw}
+
 ATURAN:
-1. Alokasi wajib: Teori "TM ${formData.sksTeori}x50; PT ${formData.sksTeori}x60; BM ${formData.sksTeori}x60". Praktikum "Praktik Lab ${formData.sksPraktik}x170".
+1. Alokasi wajib: Waktu/Alokasi harus ditulis dengan format persis seperti PDF, contoh: "TM 1 (2 x 50 mnt)", "PT 1 (2 x 60 mnt)", "BM 1 (2 x 60 mnt)" atau "Praktik 1 (2 x 170 mnt)". Sesuaikan angka '1' dengan minggu ke berapa.
 2. Isi Sub-CPMK menggunakan kode yang tersedia. PENTING: cpmk_ref dan sub_cpmk_ref HANYA BOLEH diisi dengan TEPAT SATU KODE (misal: "Sub-CPMK-1"). JANGAN menggunakan koma atau multi-kode.
 3. Setiap Sub-CPMK wajib muncul minimal satu kali pada minggu non-ujian.
-4. Materi/bahan kajian setiap minggu harus langsung mendukung Sub-CPMK pada baris yang sama; jangan memasukkan materi di luar lingkup CPMK.
-5. Indikator harus memakai perilaku yang dapat diamati dan selaras dengan KKO Sub-CPMK. Kriteria/bentuk penilaian harus benar-benar mengukur indikator tersebut.
-6. Total bobot nilai = 100%.
-7. PENTING: Anda WAJIB mengisi objek 'metode_luring' (dengan field 'bentuk', 'metode', 'alokasi') dan 'metode_daring' untuk setiap pertemuan minggu (selain ujian). Tidak boleh dikosongkan!`;
+4. Materi/bahan kajian setiap minggu harus langsung mendukung Sub-CPMK pada baris yang sama; sertakan nomor atau bullet point jika perlu.
+5. Indikator harus memakai perilaku yang dapat diamati. JIKA ADA BEBERAPA INDIKATOR, tuliskan sebagai poin-poin (bullet) terpisah menggunakan simbol '•' (misal: "• Ketepatan menjelaskan... \n• Ketepatan mengidentifikasi...").
+6. Kriteria & Bentuk Penilaian WAJIB dipisah dengan struktur persis seperti berikut (jangan digabung): 
+Kriteria:
+1. (isi kriteria)
+2. (isi kriteria)
+
+Bentuk:
+(isi bentuk, misal non-test, Resume)
+7. Total bobot nilai = 100%. Pastikan merujuk pada "Rumus Evaluasi & Bobot Nilai Akhir" di panduan untuk menentukan bobot harian (non-ujian).
+8. PENTING: Anda WAJIB mengisi objek 'metode_luring' (dengan field 'bentuk', 'metode', 'penugasan', 'alokasi') dan 'metode_daring' (dengan field 'bentuk', 'metode', 'penugasan') untuk setiap pertemuan minggu (selain ujian).`;
 
       const data2raw = await callGemini(prompt2, schema2, apiKeys);
       
       const sanitizeRef = (str, prefix) => {
         if (!str) return str;
-        const match = str.match(new RegExp(`(${prefix}-\\d+)`));
-        return match ? match[1] : str.trim();
+        return str.trim();
       };
 
       if (data2raw.matriks_pembelajaran) {
@@ -787,11 +805,15 @@ ${subCpmkListText}
 
 Tugas Wajib: ${taskListText || 'Tidak ada tugas'}
 
+PANDUAN INSTITUSI STIKES (RTM & RUBRIK):
+${panduanRpsRaw}
+
 ATURAN:
-1. Buat Rencana Tugas hanya untuk task_code yang ada.
+1. Buat Rencana Tugas hanya untuk task_code yang ada, sesuaikan dengan TEMPLATE STANDAR RTM (Tipe A atau Tipe B) yang ada di Panduan.
 2. Setiap rencana tugas wajib mengukur Sub-CPMK, indikator, materi, dan bentuk penilaian pada baris tugas yang sama.
 3. Kolom CPL wajib memakai kode CPL resmi (TRS/TRP/TRKS/TRKU), bukan kode generik seperti CPL-1.
-4. PENTING: Semua kolom referensi kode (cpmk_ref, sub_cpmk_ref, dll) HANYA BOLEH berisi TEPAT SATU KODE valid.`;
+4. PENTING: Semua kolom referensi kode (cpmk_ref, sub_cpmk_ref, dll) HANYA BOLEH berisi TEPAT SATU KODE valid.
+5. Gunakan indikator, kriteria, dan bobot sesuai "Database Instrumen dan Rubrik Penilaian Standar" di Panduan.`;
 
       const data3a = await callGemini(prompt3a, schema3a, apiKeys);
 
@@ -855,10 +877,13 @@ ${cpmkListText}
 Sub-CPMK resmi:
 ${subCpmkListText}
 
+PANDUAN INSTITUSI STIKES (RTM & RUBRIK):
+${panduanRpsRaw}
+
 ATURAN:
 1. Total aktivitas penilaian = 100, total tahapan penilaian = 100, dan total persentase kisi soal = 100.
 2. Setiap CPMK wajib muncul minimal sekali pada aktivitas dan tahapan penilaian.
-3. Buat tepat satu rubrik untuk SETIAP CPMK yang tersedia; tidak boleh ada CPMK tanpa rubrik.
+3. Buat tepat satu rubrik untuk SETIAP CPMK yang tersedia; tidak boleh ada CPMK tanpa rubrik. Selaraskan dengan "Database Instrumen dan Rubrik Penilaian Standar" di Panduan jika sesuai.
 4. Kisi soal harus menggunakan Sub-CPMK valid dan jumlah soal harus lebih dari nol.
 5. Setiap deskriptor rubrik wajib mengukur KKO dan objek kemampuan pada CPMK yang bersangkutan. cpmk_teks harus sama persis dengan rumusan CPMK resmi.
 6. UTS dan UAS harus memiliki bobot lebih dari nol dan dipetakan ke CPMK yang benar.
@@ -1458,7 +1483,7 @@ ATURAN:
       </style>
 
       {/* RPS DOCUMENT */}
-      <div id="rps-document" className={`export-document mx-auto bg-white p-10 border border-slate-300 shadow-sm print:border-none print:shadow-none print:p-0 font-[Arial,Helvetica,sans-serif] text-black w-full max-w-[297mm] min-h-[210mm] box-border relative ${activePreview === 'rps' ? '' : 'hidden'}`}>
+      <div id="rps-document" className={`export-document mx-auto bg-white p-10 print:border-none print:shadow-none print:p-0 font-[Arial,Helvetica,sans-serif] text-black w-full max-w-[297mm] min-h-[210mm] box-border relative ${activePreview === 'rps' ? '' : 'hidden'}`}>
 
         {/* HALAMAN 1: RPS HEADER & IDENTITAS - mengikuti format Word acuan */}
         <div className="document-first-page pt-4">
@@ -1635,10 +1660,10 @@ ATURAN:
               </tr>
               <tr>
                 <td className={`${td} font-bold bg-gray-50`}>Bahan Kajian / Materi Pembelajaran</td>
-                <td className={td}>
-                  <ol className="list-decimal list-outside ml-4 m-0 space-y-1">
-                    {rpsData?.bahan_kajian?.map((item, idx) => <li key={idx}>{item}</li>)}
-                  </ol>
+                <td className={`${td} align-top`}>
+                  <div className="space-y-1">
+                    {rpsData?.bahan_kajian?.map((item, idx) => <div key={idx} className="whitespace-pre-wrap text-left">{item}</div>)}
+                  </div>
                 </td>
               </tr>
               <tr>
@@ -1706,26 +1731,71 @@ ATURAN:
                 return (
                   <tr key={idx} className="break-inside-avoid">
                     <td className={tdCenter}>{row.minggu_ke}</td>
-                    <td className={td}>
-                      <span className="font-bold text-slate-700 block mb-1">{row.sub_cpmk_ref}</span>
+                    <td className={`${td} align-top text-left`}>
+                      <span className="font-bold">{row.sub_cpmk_ref?.replace('Sub-CPMK-', '')} </span>
                       <span>{subCpmkByCode[row.sub_cpmk_ref]?.teks || '-'}</span>
                     </td>
-                    <td className={td}>{row.indikator}</td>
-                    <td className={td}>{row.kriteria_bentuk}</td>
-                    <td className={td}>
-                      {row.metode_luring?.bentuk && <span className="font-semibold block">Bentuk: {row.metode_luring?.bentuk}</span>}
-                      {row.metode_luring?.metode && <span className="block mt-1">Metode: {row.metode_luring?.metode}</span>}
+                    <td className={`${td} whitespace-pre-wrap align-top text-left leading-relaxed`}>{row.indikator}</td>
+                    <td className={`${td} whitespace-pre-wrap align-top text-left leading-relaxed`}>{row.kriteria_bentuk}</td>
+                    <td className={`${td} align-top text-left leading-relaxed`}>
+                      {row.metode_luring?.bentuk && <div>&gt; {row.metode_luring?.bentuk}</div>}
+                      {row.metode_luring?.metode && <div>&gt; {row.metode_luring?.metode}</div>}
+                      {row.metode_luring?.penugasan && <div>&gt; {row.metode_luring?.penugasan}</div>}
                     </td>
-                    <td className={td}>{row.metode_daring}</td>
-                    <td className={tdCenter}>{row.metode_luring?.alokasi || '-'}</td>
-                    <td className={tdCenter}>{selectedFasilitator?.nama || '-'}</td>
-                    <td className={td}>{row.materi}</td>
+                    <td className={`${td} align-top text-left leading-relaxed`}>
+                      {typeof row.metode_daring === 'string' ? (
+                        <div className="whitespace-pre-wrap">{row.metode_daring}</div>
+                      ) : (
+                        <>
+                          {row.metode_daring?.bentuk && <div>&gt; {row.metode_daring?.bentuk}</div>}
+                          {row.metode_daring?.metode && <div>&gt; {row.metode_daring?.metode}</div>}
+                          {row.metode_daring?.penugasan && <div>&gt; {row.metode_daring?.penugasan}</div>}
+                        </>
+                      )}
+                    </td>
+                    <td className={`${tdCenter} whitespace-pre-wrap align-top`}>{row.metode_luring?.alokasi || '-'}</td>
+                    <td className={`${tdCenter} align-top`}>{selectedFasilitator?.nama || '-'}</td>
+                    <td className={`${td} whitespace-pre-wrap align-top text-left`}>{row.materi}</td>
                     <td className={tdCenter}>{row.bobot_nilai}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* CATATAN LEGEND BARU */}
+        <div className="pt-4 pb-6 text-[8.5pt] text-left break-inside-avoid px-2">
+          <div className="font-bold underline mb-1">Catatan:</div>
+          <ol className="list-decimal list-outside ml-4 mb-4 space-y-1 text-justify">
+            <li>Capaian Pembelajaran Lulusan PRODI (CPL-PRODI) adalah kemampuan yang dimiliki oleh setiap lulusan PRODI yang merupakan internalisasi dari sikap, penguasaan pengetahuan dan ketrampilan sesuai dengan jenjang prodinya yang diperoleh melalui proses pembelajaran.</li>
+            <li>CPL yang dibebankan pada mata kuliah adalah beberapa capaian pembelajaran lulusan program studi (CPL-PRODI) yang digunakan untuk pembentukan/pengembangan sebuah mata kuliah yang terdiri dari aspek sikap, ketrampulan umum, ketrampilan khusus dan pengetahuan.</li>
+            <li>CP Mata kuliah (CPMK) adalah kemampuan yang dijabarkan secara spesifik dari CPL yang dibebankan pada mata kuliah, dan bersifat spesifik terhadap bahan kajian atau materi pembelajaran mata kuliah tersebut.</li>
+            <li>Sub-CP Mata kuliah (Sub-CPMK) adalah kemampuan yang dijabarkan secara spesifik dari CPMK yang dapat diukur atau diamati dan merupakan kemampuan akhir yang direncanakan pada tiap tahap pembelajaran, dan bersifat spesifik terhadap materi pembelajaran mata kuliah tersebut.</li>
+            <li>Kriteria Penilaian adalah patokan yang digunakan sebagai ukuran atau tolok ukur ketercapaian pembelajaran dalam penilaian berdasarkan indikator-indikator yang telah ditetapkan. Kriteria penilaian merupakan pedoman bagi penilai agar penilaian konsisten dan tidak bias. Kriteria dapat berupa kuantitatif ataupun kualitatif.</li>
+            <li>Indikator penilaian kemampuan dalam proses maupun hasil belajar mahasiswa adalah pernyataan spesifik dan terukur yang mengidentifikasi kemampuan atau kinerja hasil belajar mahasiswa yang disertai bukti-bukti.</li>
+          </ol>
+          <div className="font-bold mb-1">Penilaian</div>
+          <div className="pl-4">
+            <div>a. Aspek Penilaian</div>
+            <div className="pl-4">
+              <div>1) Sikap : cara menyampaikan pendapat dalam diskusi, tanggungjawab dalam menyelesaikan tugas</div>
+              <div>2) Pengetahuan: penguasaan materi yang ditunjukkan dalam diskusi, ujian tengah semester dan ujian akhir semester</div>
+              <div>3) Keterampilan: ketepatan melakukan tindakan/prosedur, kreatifitas membuat ppt, menggunakan program, membuat diagram prosedur/ proses</div>
+            </div>
+            <div className="mt-2">b. Bobot Penilaian</div>
+            <div className="pl-4">
+              <table className="border-none w-auto text-[8.5pt]">
+                <tbody>
+                  <tr><td className="pr-2 border-none">Bobot Nilai Harian (NH) nilai tugas terstruktur</td><td className="border-none">= 60 %</td></tr>
+                  <tr><td className="pr-2 border-none">Bobot Nilai Ujian Tengah Semester (UTS)</td><td className="border-none">= 20 %</td></tr>
+                  <tr><td className="pr-2 border-none">Bobot Nilai Ujian Akhir Semester (UAS)</td><td className="border-none">= 20 %</td></tr>
+                </tbody>
+              </table>
+              <div className="mt-2">Nilai Akhir</div>
+              <div className="mt-4">Nilai Akhir = 60 % NH + 20 % UTS + 20 % UAS</div>
+            </div>
+          </div>
         </div>
 
         {/* HALAMAN 4: SILABUS SINGKAT */}
@@ -1749,9 +1819,9 @@ ATURAN:
               <tr><td className={`${td} font-bold bg-gray-50`} colSpan={4}>MATERI PEMBELAJARAN</td></tr>
               <tr>
                 <td className={`${td}`} colSpan={4}>
-                  <ol className="list-decimal list-outside ml-4 m-0 space-y-1">
-                    {rpsData?.bahan_kajian?.map((m, i) => <li key={i}>{m}</li>)}
-                  </ol>
+                  <div className="space-y-1">
+                    {rpsData?.bahan_kajian?.map((m, i) => <div key={i} className="whitespace-pre-wrap text-left ml-2">{m}</div>)}
+                  </div>
                 </td>
               </tr>
               <tr><td className={`${td} font-bold bg-gray-50`} colSpan={4}>PUSTAKA</td></tr>
@@ -1978,29 +2048,12 @@ ATURAN:
             </tbody>
           </table>
 
-          {/* CATATAN LEGEND */}
-          <div className="mt-12 text-[8pt] text-left break-inside-avoid">
-            <div className="font-bold mb-1">Catatan:</div>
-            <ol className="list-decimal list-outside ml-4 space-y-1">
-              <li><strong>Capaian Pembelajaran Lulusan PRODI (CPL-PRODI)</strong> adalah kemampuan yang dimiliki oleh setiap lulusan PRODI yang merupakan internalisasi dari sikap, penguasaan pengetahuan dan ketrampilan sesuai dengan jenjang prodinya yang diperoleh melalui proses pembelajaran.</li>
-              <li><strong>CPL yang dibebankan pada mata kuliah</strong> adalah beberapa capaian pembelajaran lulusan program studi (CPL-PRODI) yang digunakan untuk pembentukan/pengembangan sebuah mata kuliah yang terdiri dari aspek sikap, ketrampulan umum, ketrampilan khusus dan pengetahuan.</li>
-              <li><strong>CP Mata kuliah (CPMK)</strong> adalah kemampuan yang dijabarkan secara spesifik dari CPL yang dibebankan pada mata kuliah, dan bersifat spesifik terhadap bahan kajian atau materi pembelajaran mata kuliah tersebut.</li>
-              <li><strong>Sub-CP Mata kuliah (Sub-CPMK)</strong> adalah kemampuan yang dijabarkan secara spesifik dari CPMK yang dapat diukur atau diamati dan merupakan kemampuan akhir yang direncanakan pada tiap tahap pembelajaran, dan bersifat spesifik terhadap materi pembelajaran mata kuliah tersebut.</li>
-              <li><strong>Indikator penilaian</strong> kemampuan dalam proses maupun hasil belajar mahasiswa adalah pernyataan spesifik dan terukur yang mengidentifikasi kemampuan atau kinerja hasil belajar mahasiswa yang disertai bukti-bukti.</li>
-              <li><strong>Kreteria Penilaian</strong> adalah patokan yang digunakan sebagai ukuran atau tolok ukur ketercapaian pembelajaran dalam penilaian berdasarkan indikator-indikator yang telah ditetapkan. Kreteria penilaian merupakan pedoman bagi penilai agar penilaian konsisten dan tidak bias. Kreteria dapat berupa kuantitatif ataupun kualitatif.</li>
-              <li><strong>Bentuk penilaian:</strong> tes dan non-tes.</li>
-              <li><strong>Bentuk pembelajaran:</strong> Kuliah, Responsi, Tutorial, Seminar atau yang setara, Praktikum, Praktik Studio, Praktik Bengkel, Praktik Lapangan, Penelitian, Pengabdian Kepada Masyarakat dan/atau bentuk pembelajaran lain yang setara.</li>
-              <li><strong>Metode Pembelajaran:</strong> Small Group Discussion, Role-Play &amp; Simulation, Discovery Learning, Self-Directed Learning, Cooperative Learning, Collaborative Learning, Contextual Learning, Project Based Learning, dan metode lainnya yg setara.</li>
-              <li><strong>Materi Pembelajaran</strong> adalah rincian atau uraian dari bahan kajian yg dapat disajikan dalam bentuk beberapa pokok dan sub-pokok bahasan.</li>
-              <li><strong>Bobot penilaian</strong> adalah prosentasi penilaian terhadap setiap pencapaian sub-CPMK yang besarnya proposional dengan tingkat kesulitan pencapaian sub-CPMK tsb., dan totalnya 100%.</li>
-              <li><strong>TM</strong> = Tatap Muka, <strong>PT</strong> = Penugasan Terstruktur, <strong>BM</strong> = Belajar Mandiri.</li>
-            </ol>
-          </div>
+          {/* CATATAN LAMA DIHAPUS DARI SINI */}
         </div>
       </div>
 
       {/* BLUEPRINT DOCUMENT */}
-      <div id="blueprint-document" className={`export-document blueprint-document mx-auto bg-white p-8 border border-slate-300 shadow-sm print:border-none print:shadow-none print:p-0 font-[Arial,Helvetica,sans-serif] text-black w-full max-w-[210mm] min-h-[297mm] box-border relative ${activePreview === 'blueprint' ? '' : 'hidden'}`}>
+      <div id="blueprint-document" className={`export-document blueprint-document mx-auto bg-white p-8 print:border-none print:shadow-none print:p-0 font-[Arial,Helvetica,sans-serif] text-black w-full max-w-[210mm] min-h-[297mm] box-border relative ${activePreview === 'blueprint' ? '' : 'hidden'}`}>
         <section className="document-first-page pt-4">
           <h2 className="text-center font-bold text-lg mb-5 uppercase">Blue Print Penilaian Mata Kuliah</h2>
           <table className="w-full border-collapse text-[9pt] mb-5 blueprint-meta-table">
@@ -2098,11 +2151,18 @@ ATURAN:
                 <tr key={`blueprint-program-${index}`} className="align-top leading-snug break-inside-avoid">
                   <td className={tdCenter}>{row.minggu_ke}</td>
                   <td className={td}>{subCpmkByCode[row.sub_cpmk_ref]?.teks || row.cpmk_ref || '-'}</td>
-                  <td className={td}>{row.indikator}</td>
-                  <td className={td}>{row.kriteria_bentuk}</td>
-                  <td className={td}>{[row.metode_luring?.bentuk, row.metode_luring?.metode, row.metode_daring].filter(Boolean).join(' - ')}</td>
-                  <td className={tdCenter}>{row.metode_luring?.alokasi || '-'}</td>
-                  <td className={td}>{row.materi}</td>
+                  <td className={`${td} whitespace-pre-wrap align-top text-left`}>{row.indikator}</td>
+                  <td className={`${td} whitespace-pre-wrap align-top text-left`}>{row.kriteria_bentuk}</td>
+                  <td className={`${td} align-top text-left`}>
+                    {[
+                      row.metode_luring?.bentuk,
+                      row.metode_luring?.metode,
+                      row.metode_luring?.penugasan,
+                      typeof row.metode_daring === 'string' ? row.metode_daring : row.metode_daring?.bentuk
+                    ].filter(Boolean).join(' - ')}
+                  </td>
+                  <td className={`${tdCenter} whitespace-pre-wrap align-top`}>{row.metode_luring?.alokasi || '-'}</td>
+                  <td className={`${td} whitespace-pre-wrap align-top text-left`}>{row.materi}</td>
                   <td className={tdCenter}>{row.bobot_nilai}</td>
                 </tr>
               ))}
