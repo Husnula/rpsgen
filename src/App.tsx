@@ -1558,7 +1558,7 @@ ATURAN:
             </tbody>
           </table>
 
-          <table className="page-break pt-4 w-full border-collapse border border-black mb-4 export-page">
+          <table className="pt-4 w-full border-collapse border border-black mb-4 export-page">
             <tbody>
               {(() => {
                 const cplGroups = ['TRS', 'TRP', 'TRKS', 'TRKU'].filter(grp => cplBank[grp].some(c => usedCplCodes.has(c.kode))).length;
@@ -1657,13 +1657,13 @@ ATURAN:
             </table>
           </div>
 
-          <table className="page-break pt-4 w-full border-collapse border border-black mb-6 break-inside-avoid export-page">
+          <table className="page-break pt-4 w-full border-collapse border border-black mb-6 export-page">
             <tbody>
-              <tr>
+              <tr className="break-inside-avoid">
                 <td className={`${td} font-bold w-[15%] bg-gray-50`}>Deskripsi Singkat MK</td>
                 <td className={`${td} text-justify`}>{formData.description}</td>
               </tr>
-              <tr>
+              <tr className="break-inside-avoid">
                 <td className={`${td} font-bold bg-gray-50`}>Bahan Kajian / Materi Pembelajaran</td>
                 <td className={`${td} align-top`}>
                   <div className="space-y-1">
@@ -1671,7 +1671,7 @@ ATURAN:
                   </div>
                 </td>
               </tr>
-              <tr>
+              <tr className="break-inside-avoid">
                 <td className={`${td} font-bold bg-gray-50`}>Pustaka</td>
                 <td className={td}>
                   <div className="font-bold underline mb-1">Utama:</div>
@@ -1684,11 +1684,11 @@ ATURAN:
                   </ul>
                 </td>
               </tr>
-              <tr>
+              <tr className="break-inside-avoid">
                 <td className={`${td} font-bold bg-gray-50`}>Dosen Pengampu</td>
                 <td className={td}>{selectedLecturer?.nama || '-'}</td>
               </tr>
-              <tr>
+              <tr className="break-inside-avoid">
                 <td className={`${td} font-bold bg-gray-50`}>Mata Kuliah Syarat</td>
                 <td className={td}>-</td>
               </tr>
@@ -1950,7 +1950,7 @@ ATURAN:
           ))}
 
           {rpsData?.blueprint_penilaian?.rubrik_per_cpmk?.map((rubrik, rubrikIndex) => (
-            <div key={rubrik.cpmk_ref} className="page-break pt-4 mb-6 break-inside-avoid export-page">
+            <div key={rubrik.cpmk_ref} className="pt-4 mb-6 break-inside-avoid export-page">
               <h3 className="font-bold text-[10.5pt] mb-2 uppercase">Rubrik Penilaian {rubrik.cpmk_ref}</h3>
               <table className="w-full border-collapse border border-black text-[8.5pt]">
                 <thead className="bg-gray-100 text-center font-bold">
