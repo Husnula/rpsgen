@@ -1510,7 +1510,7 @@ ATURAN:
                   <h1 className="text-base font-bold uppercase mb-1" style={{ textAlign: 'center', margin: 0 }}>ILMU KEPERAWATAN, STIKES DIAN HUSADA MOJOKERTO</h1>
                 </td>
                 <td style={{ width: '15%', verticalAlign: 'middle', textAlign: 'center' }} className="border border-black p-2 font-bold text-[9pt]">
-                  Kode Dokumen<br /><span className="font-normal">{rpsData?.kode_dokumen || '-'}</span>
+                  Kode<br />Dokumen<br /><span className="font-normal">{rpsData?.kode_dokumen || ''}</span>
                 </td>
               </tr>
               <tr>
@@ -1518,24 +1518,23 @@ ATURAN:
                   RENCANA PEMBELAJARAN SEMESTER
                 </td>
               </tr>
-              <tr>
-                <td className={`${td} font-bold w-[15%]`}>MATA KULIAH (MK)</td>
-                <td className={`${td} w-[25%] font-bold`}>{formData.mkName}</td>
-                <td className={`${td} font-bold w-[10%]`}>KODE</td>
-                <td className={`${td} w-[15%]`}>{formData.mkCode}</td>
-                <td className={`${td} font-bold w-[15%]`}>BOBOT (sks)</td>
-                <td className={`${td} w-[20%]`}>
-                  {formData.sks} SKS<br/>
-                  <span className="font-normal text-[8pt]">(Teori: {formData.sksTeori}, Praktik: {formData.sksPraktik})</span>
-                </td>
+              <tr className="bg-white">
+                <td className={`${td} font-bold w-[15%] text-left`}>MATA KULIAH (MK)</td>
+                <td className={`${td} font-bold w-[15%] text-left`}>KODE</td>
+                <td className={`${td} font-bold w-[20%] text-left`}>Rumpun MK</td>
+                <td className={`${td} font-bold w-[15%] text-left`}>BOBOT (sks)</td>
+                <td className={`${td} font-bold w-[10%] text-left`}>SMT</td>
+                <td className={`${td} font-bold w-[25%] text-left`}>Tgl Penyusunan</td>
               </tr>
               <tr>
-                <td className={`${td} font-bold`}>Rumpun MK</td>
-                <td className={td}>Mata Kuliah Inti / Pencitraan</td>
-                <td className={`${td} font-bold`}>SEMESTER</td>
-                <td className={td}>{formData.semester}</td>
-                <td className={`${td} font-bold`}>Tgl Penyusunan</td>
-                <td className={td}>{dateFormatted}</td>
+                <td className={`${td} text-left`}>{formData.mkName}</td>
+                <td className={`${td} text-left`}>{formData.mkCode}</td>
+                <td className={`${td} text-left`}>Mata Kuliah Inti / Pencitraan</td>
+                <td className={`${td} text-left`}>
+                  T = {formData.sksTeori} <span className="ml-3">P = {formData.sksPraktik || '-'}</span>
+                </td>
+                <td className={`${td} text-left text-center`}>{formData.semester}</td>
+                <td className={`${td} text-left`}>{dateFormatted}</td>
               </tr>
             </tbody>
           </table>
@@ -1543,17 +1542,17 @@ ATURAN:
           <table className="w-full border-collapse border border-black border-t-0 text-center mb-4">
             <tbody>
               <tr>
-                <td rowSpan={2} className={`${td} font-bold w-[15%] text-left align-middle border-t-0`}>OTORISASI</td>
-                <td className={`${td} font-bold bg-gray-50 border-t-0 w-[21.25%]`}>Dosen Pengembang RPS</td>
-                <td className={`${td} font-bold bg-gray-50 border-t-0 w-[21.25%]`}>Koordinator RMK</td>
-                <td className={`${td} font-bold bg-gray-50 border-t-0 w-[21.25%]`}>Ketua PRODI</td>
-                <td className={`${td} font-bold bg-gray-50 border-t-0 w-[21.25%]`}>WAKA / Wakil Ketua 1</td>
+                <td rowSpan={2} className={`${td} font-bold w-[15%] text-left align-top border-t-0`}>OTORISASI</td>
+                <td className={`${td} font-bold bg-white border-t-0 w-[21.25%]`}>Pengembang RPS</td>
+                <td className={`${td} font-bold bg-white border-t-0 w-[21.25%]`}>Koordinator RMK</td>
+                <td className={`${td} font-bold bg-white border-t-0 w-[21.25%]`}>Ketua PRODI</td>
+                <td className={`${td} font-bold bg-white border-t-0 w-[21.25%]`}>Waka</td>
               </tr>
               <tr>
-                <td className="p-2 border border-black h-20 align-bottom">( {selectedLecturer ? selectedLecturer.nama : '.........................................'} )</td>
-                <td className="p-2 border border-black h-20 align-bottom">( {selectedKoor ? selectedKoor.nama : '.........................................'} )</td>
-                <td className="p-2 border border-black h-20 align-bottom">( {selectedKaprodi ? selectedKaprodi.nama : '.........................................'} )</td>
-                <td className="p-2 border border-black h-20 align-bottom">( {selectedWaka ? selectedWaka.nama : '.........................................'} )</td>
+                <td className="p-2 border border-black h-20 align-bottom text-[9pt]">{selectedLecturer ? selectedLecturer.nama : ''}</td>
+                <td className="p-2 border border-black h-20 align-bottom text-[9pt]">{selectedKoor ? selectedKoor.nama : ''}</td>
+                <td className="p-2 border border-black h-20 align-bottom text-[9pt]">{selectedKaprodi ? selectedKaprodi.nama : ''}</td>
+                <td className="p-2 border border-black h-20 align-bottom text-[9pt]">{selectedWaka ? selectedWaka.nama : ''}</td>
               </tr>
             </tbody>
           </table>
@@ -1561,44 +1560,37 @@ ATURAN:
           <table className="pt-4 w-full border-collapse border border-black mb-4 export-page">
             <tbody>
               {(() => {
-                const cplGroups = ['TRS', 'TRP', 'TRKS', 'TRKU'].filter(grp => cplBank[grp].some(c => usedCplCodes.has(c.kode))).length;
+                const relevantCpls = allCplFlat.filter((c) => usedCplCodes.has(c.kode));
                 const cpmkCount = rpsData?.cpmk?.length || 0;
                 const subCpmkCount = rpsData?.sub_cpmk?.length || 0;
-                const totalRowSpan = 1 + cplGroups + 1 + cpmkCount + 1 + subCpmkCount;
+                const totalRowSpan = 1 + relevantCpls.length + 1 + cpmkCount + 1 + subCpmkCount;
                 return (
                   <tr>
-                    <td rowSpan={totalRowSpan} className={`${td} w-[15%] bg-gray-50 font-bold`}>Capaian Pembelajaran (CP)</td>
-                    <td className={th} colSpan={2}>CPL-PRODI yang dibebankan pada MK</td>
+                    <td rowSpan={totalRowSpan} className={`${td} w-[15%] font-bold align-top bg-white`}>Capaian Pembelajaran (CP)</td>
+                    <td className={`${th} text-left bg-white`} colSpan={2}>CPL-PRODI yang dibebankan pada MK</td>
                   </tr>
                 );
               })()}
-              {['TRS', 'TRP', 'TRKS', 'TRKU'].map((grp) => {
-                const relevant = cplBank[grp].filter((c) => usedCplCodes.has(c.kode));
-                if (relevant.length === 0) return null;
-                const label = { TRS: 'Sikap (TRS)', TRP: 'Pengetahuan (TRP)', TRKS: 'Ketrampilan Khusus (TRKS)', TRKU: 'Ketrampilan Umum (TRKU)' }[grp];
-                return (
-                  <tr key={grp}>
-                    <td className={`${td} w-[15%] font-semibold`}>{label}</td>
-                    <td className={td}>
-                      {relevant.map((c) => (<div key={c.kode} className="mb-1"><span className="font-bold">{c.kode}</span> {c.teks}</div>))}
-                    </td>
-                  </tr>
-                );
-              })}
-              <tr><td className={th} colSpan={2}>Capaian Pembelajaran Mata Kuliah (CPMK)</td></tr>
-              {rpsData?.cpmk?.map((item, idx) => (
-                <tr key={idx}>
-                  <td className={`${td} font-bold text-center w-[15%]`}>{item.kode}</td>
-                  <td className={td}>{item.teks}</td>
+              {allCplFlat.filter((c) => usedCplCodes.has(c.kode)).map((c) => (
+                <tr key={c.kode}>
+                  <td className={`${td} w-[15%] font-bold bg-white text-left whitespace-nowrap`}>{c.kode}</td>
+                  <td className={`${td} bg-white text-left`}>{c.teks}</td>
                 </tr>
               ))}
-              <tr><td className={th} colSpan={2}>Sub Capaian Pembelajaran Mata Kuliah (Sub-CPMK)</td></tr>
+              <tr><td className={`${th} text-left bg-white`} colSpan={2}>Capaian Pembelajaran Mata Kuliah (CPMK)</td></tr>
+              {rpsData?.cpmk?.map((item, idx) => (
+                <tr key={idx}>
+                  <td className={`${td} w-[15%] font-bold bg-white text-left whitespace-nowrap`}>{item.kode}</td>
+                  <td className={`${td} bg-white text-left`}>{item.teks}</td>
+                </tr>
+              ))}
+              <tr><td className={`${th} text-left bg-white`} colSpan={2}>Sub Capaian Pembelajaran Mata Kuliah (Sub-CPMK)</td></tr>
               {rpsData?.sub_cpmk?.map((item) => (
                 <tr key={item.kode}>
-                  <td className={`${td} font-bold text-center w-[15%]`}>{item.kode}</td>
-                  <td className={td}>
+                  <td className={`${td} w-[15%] font-bold bg-white text-left whitespace-nowrap`}>{item.kode}</td>
+                  <td className={`${td} bg-white text-left`}>
                     {item.teks}
-                    <span className="block text-[7pt] text-slate-500 font-bold">Induk: {item.cpmk_ref}</span>
+                    <span className="block text-[7pt] text-slate-500 font-bold mt-1">Induk: {item.cpmk_ref}</span>
                   </td>
                 </tr>
               ))}
@@ -1719,6 +1711,11 @@ ATURAN:
                 <th className="border border-black p-1 w-[12%]">Luring (offline)</th>
                 <th className="border border-black p-1 w-[12%]">Daring (online)</th>
               </tr>
+              <tr>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                  <th key={num} className="border border-black p-1 font-normal">-{num}</th>
+                ))}
+              </tr>
             </thead>
             <tbody className="align-top leading-snug">
               {(rpsData?.matriks_pembelajaran || []).map((row, idx) => {
@@ -1737,7 +1734,6 @@ ATURAN:
                   <tr key={idx} className="break-inside-avoid">
                     <td className={tdCenter}>{row.minggu_ke}</td>
                     <td className={`${td} align-top text-left`}>
-                      <span className="font-bold">{row.sub_cpmk_ref?.replace('Sub-CPMK-', '')} </span>
                       <span>{subCpmkByCode[row.sub_cpmk_ref]?.teks || '-'}</span>
                     </td>
                     <td className={`${td} whitespace-pre-wrap align-top text-left leading-relaxed`}>{row.indikator}</td>
