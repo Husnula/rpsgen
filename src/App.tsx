@@ -632,24 +632,16 @@ Konteks Visi-Misi Prodi: ${visiMisiContext}
 Daftar CPL-PRODI yang tersedia: ${cplList}
 
 TUGAS:
-1. Pilih HANYA CPL-PRODI yang relevan (misal TRS-1).
-2. Buat 4-6 CPMK terkait CPL. Setiap rumusan wajib berbentuk "Mahasiswa mampu + SATU KKO terukur + objek kemampuan + konteks/kriteria".
-3. DILARANG membuka rumusan CPMK/Sub-CPMK dengan kata menguasai, memahami, atau mengetahui. Gunakan KKO terukur seperti menjelaskan, menerapkan, menganalisis, mengevaluasi, mendemonstrasikan, merancang, atau menunjukkan.
+1. Pilih HANYA CPL-PRODI yang relevan (misal TRS-1)2. Buat 4-6 CPMK terkait CPL. Setiap rumusan wajib berbentuk "Mahasiswa mampu + SATU KKO terukur + objek kemampuan + konteks/kriteria".
+3. Gunakan KKO yang teramati dan terukur, hindari penggunaan kata yang ambigu jika memungkinkan, namun fokuskan pada keluwesan dan makna capaian akademis.
 4. Jika memilih CPL sikap (TRS), minimal satu CPMK/Sub-CPMK wajib memakai KKO afektif yang teramati (misalnya menunjukkan, mematuhi, mempertahankan, mengintegrasikan) dan indikatornya nanti dapat dinilai.
 5. Buat 5-12 Sub-CPMK unik terkait tepat satu CPMK. Semua teks harus diawali "Mahasiswa mampu ".
 6. Bahan kajian harus spesifik untuk setiap Sub-CPMK, bukan daftar umum.
-7. Pustaka minimal 5 sumber: mayoritas terbit 2016-2026 dan minimal 2 sumber terbit 2021-2026. Prioritaskan buku standar, pedoman profesi/regulator, atau artikel ilmiah yang benar-benar dapat diidentifikasi; jangan mengarang DOI.`;
+7. Pustaka minimal 5 sumber mutakhir dan relevan. Prioritaskan buku standar, pedoman profesi/regulator, atau artikel ilmiah yang benar-benar dapat diidentifikasi; jangan mengarang DOI atau buku fiktif.`;
       
       const validateData1 = (data: any) => {
-        const references = [...(data.pustaka?.utama || []), ...(data.pustaka?.pendukung || [])];
-        const referenceYears = references
-          .map((reference) => [...String(reference).matchAll(/\b(19|20)\d{2}\b/g)].map((match) => Number(match[0])).pop())
-          .filter(Number.isFinite);
-        const recentCount = referenceYears.filter((year) => year >= 2016 && year <= 2026).length;
-        const veryRecentCount = referenceYears.filter((year) => year >= 2021 && year <= 2026).length;
-        if (references.length < 5 || recentCount < Math.ceil(references.length / 2) || veryRecentCount < 2) {
-          return 'Pustaka wajib minimal 5 sumber, mayoritas terbit 2016-2026, dan minimal 2 sumber terbit 2021-2026.';
-        }
+        if (!data?.cpmk || data.cpmk.length === 0) return "CPMK harus diisi.";
+        if (!data?.sub_cpmk || data.sub_cpmk.length === 0) return "Sub-CPMK harus diisi.";
         return null;
       };
 
@@ -710,18 +702,19 @@ ${panduanRpsRaw}
 ATURAN:
 1. Alokasi wajib: Waktu/Alokasi harus ditulis dengan format persis seperti PDF, contoh: "TM 1 (2 x 50 mnt)", "PT 1 (2 x 60 mnt)", "BM 1 (2 x 60 mnt)" atau "Praktik 1 (2 x 170 mnt)". Sesuaikan angka '1' dengan minggu ke berapa.
 2. Isi Sub-CPMK menggunakan kode yang tersedia. PENTING: cpmk_ref dan sub_cpmk_ref HANYA BOLEH diisi dengan TEPAT SATU KODE (misal: "Sub-CPMK-1"). JANGAN menggunakan koma atau multi-kode.
-3. Setiap Sub-CPMK wajib muncul minimal satu kali pada minggu non-ujian.
-4. Materi/bahan kajian setiap minggu harus langsung mendukung Sub-CPMK pada baris yang sama; sertakan nomor atau bullet point jika perlu.
-5. Indikator harus memakai perilaku yang dapat diamati. JIKA ADA BEBERAPA INDIKATOR, tuliskan sebagai poin-poin (bullet) terpisah menggunakan simbol '•' (misal: "• Ketepatan menjelaskan... \n• Ketepatan mengidentifikasi...").
-6. Kriteria & Bentuk Penilaian WAJIB dipisah dengan struktur persis seperti berikut (jangan digabung): 
+3. PENERAPAN TAKSONOMI BLOOM BERTINGKAT: Penggunaan Kata Kerja Operasional (KKO) WAJIB bertahap PER TOPIK MATERI. Mahasiswa TIDAK BOLEH dituntut untuk "mempraktikkan" (Ranah Psikomotorik) suatu prosedur jika belum ada tahap kognitif untuk "menjelaskan/menguraikan" dasar teorinya. Anda wajib meletakkan pemahaman teori mendahului tahap praktik.
+4. Setiap Sub-CPMK wajib muncul minimal satu kali pada minggu non-ujian.
+5. Materi/bahan kajian setiap minggu harus langsung mendukung Sub-CPMK pada baris yang sama; sertakan nomor atau bullet point jika perlu.
+6. Indikator harus memakai perilaku yang dapat diamati. JIKA ADA BEBERAPA INDIKATOR, tuliskan sebagai poin-poin (bullet) terpisah menggunakan simbol '•'.
+7. Kriteria & Bentuk Penilaian WAJIB dipisah dengan struktur persis seperti berikut (jangan digabung): 
 Kriteria:
 1. (isi kriteria)
 2. (isi kriteria)
 
 Bentuk:
 (isi bentuk, misal non-test, Resume)
-7. Total bobot nilai = 100%. Pastikan merujuk pada "Rumus Evaluasi & Bobot Nilai Akhir" di panduan untuk menentukan bobot harian (non-ujian).
-8. PENTING: Anda WAJIB mengisi objek 'metode_luring' (dengan field 'bentuk', 'metode', 'penugasan', 'alokasi') dan 'metode_daring' (dengan field 'bentuk', 'metode', 'penugasan') untuk setiap pertemuan minggu (selain ujian).`;
+8. Total bobot nilai = 100%. Pastikan merujuk pada "Rumus Evaluasi & Bobot Nilai Akhir" di panduan untuk menentukan bobot harian (non-ujian).
+9. PENTING: Anda WAJIB mengisi objek 'metode_luring' (dengan field 'bentuk', 'metode', 'penugasan', 'alokasi') dan 'metode_daring' (dengan field 'bentuk', 'metode', 'penugasan') untuk setiap pertemuan minggu (selain ujian).`;
 
       const data2raw = await callGemini(prompt2, schema2, apiKeys);
       
@@ -884,10 +877,11 @@ ATURAN:
 1. Total aktivitas penilaian = 100, total tahapan penilaian = 100, dan total persentase kisi soal = 100.
 2. Setiap CPMK wajib muncul minimal sekali pada aktivitas dan tahapan penilaian.
 3. Buat tepat satu rubrik untuk SETIAP CPMK yang tersedia; tidak boleh ada CPMK tanpa rubrik. Selaraskan dengan "Database Instrumen dan Rubrik Penilaian Standar" di Panduan jika sesuai.
-4. Kisi soal harus menggunakan Sub-CPMK valid dan jumlah soal harus lebih dari nol.
-5. Setiap deskriptor rubrik wajib mengukur KKO dan objek kemampuan pada CPMK yang bersangkutan. cpmk_teks harus sama persis dengan rumusan CPMK resmi.
-6. UTS dan UAS harus memiliki bobot lebih dari nol dan dipetakan ke CPMK yang benar.
-7. PENTING: Semua kolom referensi kode (cpmk_ref, sub_cpmk_ref, dll) HANYA BOLEH berisi TEPAT SATU KODE valid.`;
+4. Fokuslah pada penyusunan deskripsi rubrik dan indikator yang komprehensif, akademis, dan bermakna. Hindari deskripsi yang repetitif, mekanis, atau kaku.
+5. Kisi soal harus menggunakan Sub-CPMK valid dan jumlah soal harus lebih dari nol.
+6. Setiap deskriptor rubrik wajib mengukur KKO dan objek kemampuan pada CPMK yang bersangkutan. cpmk_teks harus sama persis dengan rumusan CPMK resmi.
+7. UTS dan UAS harus memiliki bobot lebih dari nol dan dipetakan ke CPMK yang benar.
+8. PENTING: Semua kolom referensi kode (cpmk_ref, sub_cpmk_ref, dll) HANYA BOLEH berisi TEPAT SATU KODE valid.`;
 
       const data3b = await callGemini(prompt3b, schema3b, apiKeys);
       
