@@ -1791,9 +1791,33 @@ ATURAN:
               <div className="mt-4">Nilai Akhir = 60 % NH + 20 % UTS + 20 % UAS</div>
             </div>
           </div>
+
+          <table className="w-full mt-12 text-[10pt] break-inside-avoid no-border" style={{ border: 'none' }}>
+            <tbody>
+              <tr>
+                <td style={{ border: 'none', width: '33.33%', textAlign: 'left', verticalAlign: 'top' }}>
+                  {`Mojokerto, ${dateFormatted}`}<br />Dosen Pengampu/Penanggungjawab MK<br /><br /><br /><br />
+                  <span className="font-bold underline">( {selectedLecturer ? selectedLecturer.nama : '.........................................'} )</span><br/>
+                  NIDN/NUPTK: {selectedLecturer?.nidn || '..................'}
+                </td>
+                <td style={{ border: 'none', width: '33.33%', textAlign: 'center', verticalAlign: 'top' }}>
+                  Mengetahui,<br />Ketua Program Studi<br /><br /><br /><br />
+                  <span className="font-bold underline">( {selectedKaprodi ? selectedKaprodi.nama : '.........................................'} )</span><br/>
+                  NIDN/NUPTK: {selectedKaprodi?.nidn || '..................'}
+                </td>
+                <td style={{ border: 'none', width: '33.33%', textAlign: 'right', verticalAlign: 'top' }}>
+                  Menyetujui,<br />WAKA / Wakil Ketua 1<br /><br /><br /><br />
+                  <span className="font-bold underline">( {selectedWaka ? selectedWaka.nama : '.........................................'} )</span><br/>
+                  NIDN/NUPTK: {selectedWaka?.nidn || '..................'}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         {/* HALAMAN 4: SILABUS SINGKAT */}
+        {/* Silabus disembunyikan sementara atas permintaan klien */}
+        {false && (
         <div className="page-break pt-4">
           <h2 className="text-center font-bold text-lg mb-4">SILABUS SINGKAT</h2>
           <table className="w-full border-collapse border border-black text-[9.5pt] mb-6">
@@ -1835,6 +1859,7 @@ ATURAN:
             </tbody>
           </table>
         </div>
+        )}
 
         {/* HALAMAN 5: PORTOFOLIO PENILAIAN */}
         <div className="page-break pt-4">
@@ -2034,6 +2059,148 @@ ATURAN:
             );
           })}
 
+          {/* TABEL RUBRIK STATIS */}
+          <div className="pt-4 mb-6 break-inside-avoid export-page">
+            <h3 className="text-center font-serif text-[12pt] mb-2 uppercase">RUBRIK MAKALAH</h3>
+            <div className="mb-2 text-[10pt]">
+              <div>Mata Kuliah: {formData.mkName}</div>
+              <div>Kelompok:</div>
+            </div>
+            <table className="w-full border-collapse border border-black text-[9.5pt] mb-8">
+              <thead>
+                <tr className="uppercase text-center">
+                  <th className="border border-black p-1 w-[5%]">NO</th>
+                  <th className="border border-black p-1 w-[60%]">ASPEK YANG DINILAI</th>
+                  <th className="border border-black p-1 w-[15%]">BOBOT</th>
+                  <th className="border border-black p-1 w-[20%]">NILAI</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="border border-black p-1 text-center">1</td>
+                  <td className="border border-black p-1">Sistematika sesuai</td>
+                  <td className="border border-black p-1 text-center">10</td>
+                  <td className="border border-black p-1 text-center"></td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-1 text-center">2</td>
+                  <td className="border border-black p-1">Tata cara penulisan tepat</td>
+                  <td className="border border-black p-1 text-center">10</td>
+                  <td className="border border-black p-1 text-center"></td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-1 text-center">3</td>
+                  <td className="border border-black p-1">Konsistensi istilah</td>
+                  <td className="border border-black p-1 text-center">10</td>
+                  <td className="border border-black p-1 text-center"></td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-1 text-center">4</td>
+                  <td className="border border-black p-1">Kerapihan makalah</td>
+                  <td className="border border-black p-1 text-center">10</td>
+                  <td className="border border-black p-1 text-center"></td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-1 text-center">5</td>
+                  <td className="border border-black p-1">Kelengkapan isi sesuai RPS</td>
+                  <td className="border border-black p-1 text-center">60</td>
+                  <td className="border border-black p-1 text-center"></td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-1 text-center font-bold" colSpan={2}>TOTAL SKOR</td>
+                  <td className="border border-black p-1 text-center">100</td>
+                  <td className="border border-black p-1 text-center"></td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-1 font-bold" colSpan={2}>NILAI AKHIR MAKALAH</td>
+                  <td className="border border-black p-1 text-center"></td>
+                  <td className="border border-black p-1 text-center"></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3 className="text-center font-serif text-[12pt] mb-2 uppercase">RUBRIK PENYUSUNAN PPT</h3>
+            <div className="mb-2 text-[10pt]">
+              <div>Mata Kuliah: {formData.mkName}</div>
+              <div>Kelompok:</div>
+            </div>
+            <table className="w-full border-collapse border border-black text-[9.5pt] mb-8">
+              <thead>
+                <tr className="uppercase text-center">
+                  <th className="border border-black p-1 w-[5%]">NO</th>
+                  <th className="border border-black p-1 w-[60%]">ASPEK YANG DINILAI</th>
+                  <th className="border border-black p-1 w-[15%]">BOBOT</th>
+                  <th className="border border-black p-1 w-[20%]">NILAI</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="border border-black p-1 text-center">1</td>
+                  <td className="border border-black p-1">Jelas dan konsisten</td>
+                  <td className="border border-black p-1 text-center">25</td>
+                  <td className="border border-black p-1 text-center"></td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-1 text-center">2</td>
+                  <td className="border border-black p-1">Sederhana dan innovative</td>
+                  <td className="border border-black p-1 text-center">25</td>
+                  <td className="border border-black p-1 text-center"></td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-1 text-center">3</td>
+                  <td className="border border-black p-1">Mudah dibaca</td>
+                  <td className="border border-black p-1 text-center">25</td>
+                  <td className="border border-black p-1 text-center"></td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-1 text-center">4</td>
+                  <td className="border border-black p-1">Gambar/video relevan</td>
+                  <td className="border border-black p-1 text-center">25</td>
+                  <td className="border border-black p-1 text-center"></td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-1 text-center font-bold" colSpan={2}>TOTAL SKOR</td>
+                  <td className="border border-black p-1 text-center">100</td>
+                  <td className="border border-black p-1 text-center"></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3 className="text-center font-serif text-[12pt] mb-2 uppercase">RUBRIK PRESENTASI (skala persepsi)</h3>
+            <div className="mb-2 text-[10pt]">
+              <div>Mata Kuliah: {formData.mkName}</div>
+              <div>Kelompok:</div>
+            </div>
+            <table className="w-full border-collapse border border-black text-[9.5pt]">
+              <thead>
+                <tr className="text-center">
+                  <th className="border border-black p-1 w-[35%] text-left">Aspek yg dinilai</th>
+                  <th className="border border-black p-1 w-[13%]">Sangat kurang</th>
+                  <th className="border border-black p-1 w-[13%]">kurang</th>
+                  <th className="border border-black p-1 w-[13%]">cukup</th>
+                  <th className="border border-black p-1 w-[13%]">baik</th>
+                  <th className="border border-black p-1 w-[13%]">Baik sekali</th>
+                </tr>
+                <tr className="text-center">
+                  <th className="border border-black p-1"></th>
+                  <th className="border border-black p-1">&lt; 20</th>
+                  <th className="border border-black p-1">21 - 40</th>
+                  <th className="border border-black p-1">41 - 60</th>
+                  <th className="border border-black p-1">61 - 80</th>
+                  <th className="border border-black p-1">81 - 100</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td className="border border-black p-1">Kemampuan komunikasi</td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td></tr>
+                <tr><td className="border border-black p-1">Penguasaan materi</td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td></tr>
+                <tr><td className="border border-black p-1">Kemampuan menjawab pertanyaan</td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td></tr>
+                <tr><td className="border border-black p-1">Penggunaan alat peraga presentasi</td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td></tr>
+                <tr><td className="border border-black p-1">Ketepatan menyelesaikan masalah</td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td></tr>
+                <tr><td className="border border-black p-1 font-bold">Nilai AKHIR</td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td><td className="border border-black p-1"></td></tr>
+              </tbody>
+            </table>
+          </div>
+
           {rpsData?.blueprint_penilaian?.rubrik_per_cpmk?.map((rubrik, rubrikIndex) => (
             <div key={rubrik.cpmk_ref} className="pt-4 mb-6 break-inside-avoid export-page">
               <h3 className="font-bold text-[10.5pt] mb-2 uppercase">Rubrik Penilaian {rubrik.cpmk_ref}</h3>
@@ -2116,27 +2283,7 @@ ATURAN:
             </div>
           </div>
 
-          <table className="w-full mt-12 text-[10pt] break-inside-avoid no-border" style={{ border: 'none' }}>
-            <tbody>
-              <tr>
-                <td style={{ border: 'none', width: '33.33%', textAlign: 'left', verticalAlign: 'top' }}>
-                  {`Mojokerto, ${dateFormatted}`}<br />Dosen Pengampu/Penanggungjawab MK<br /><br /><br /><br />
-                  <span className="font-bold underline">( {selectedLecturer ? selectedLecturer.nama : '.........................................'} )</span><br/>
-                  NIDN/NUPTK: {selectedLecturer?.nidn || '..................'}
-                </td>
-                <td style={{ border: 'none', width: '33.33%', textAlign: 'center', verticalAlign: 'top' }}>
-                  Mengetahui,<br />Ketua Program Studi<br /><br /><br /><br />
-                  <span className="font-bold underline">( {selectedKaprodi ? selectedKaprodi.nama : '.........................................'} )</span><br/>
-                  NIDN/NUPTK: {selectedKaprodi?.nidn || '..................'}
-                </td>
-                <td style={{ border: 'none', width: '33.33%', textAlign: 'right', verticalAlign: 'top' }}>
-                  Menyetujui,<br />WAKA / Wakil Ketua 1<br /><br /><br /><br />
-                  <span className="font-bold underline">( {selectedWaka ? selectedWaka.nama : '.........................................'} )</span><br/>
-                  NIDN/NUPTK: {selectedWaka?.nidn || '..................'}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          {/* Tanda tangan telah dipindahkan ke atas */}
 
           {/* CATATAN LAMA DIHAPUS DARI SINI */}
         </div>
@@ -2201,15 +2348,15 @@ ATURAN:
           <table className="w-full border-collapse border border-black text-center text-[8pt]">
             <thead className="bg-gray-100 font-bold">
               <tr>
-                <th className="border border-black p-1">CPMK</th>
-                {rpsData?.sub_cpmk?.map((sub) => <th key={sub.kode} className="border border-black p-1">{sub.kode}</th>)}
+                <th className="border border-black p-1">Sub-CPMK</th>
+                {rpsData?.cpmk?.map((cpmk) => <th key={cpmk.kode} className="border border-black p-1">{cpmk.kode}</th>)}
               </tr>
             </thead>
             <tbody>
-              {rpsData?.cpmk?.map((cpmk) => (
-                <tr key={cpmk.kode}>
-                  <td className="border border-black p-1 font-bold">{cpmk.kode}</td>
-                  {rpsData?.sub_cpmk?.map((sub) => <td key={sub.kode} className="border border-black p-1">{sub.cpmk_ref === cpmk.kode ? '√' : ''}</td>)}
+              {rpsData?.sub_cpmk?.map((sub) => (
+                <tr key={sub.kode}>
+                  <td className="border border-black p-1 font-bold">{sub.kode}</td>
+                  {rpsData?.cpmk?.map((cpmk) => <td key={cpmk.kode} className="border border-black p-1">{sub.cpmk_ref === cpmk.kode ? '√' : ''}</td>)}
                 </tr>
               ))}
             </tbody>
@@ -2268,27 +2415,51 @@ ATURAN:
 
         <section className="pt-3">
           <h3 className="font-bold text-[10pt] mb-2 uppercase">Rencana Evaluasi Ketercapaian Bobot CPMK</h3>
-          <table className="w-full border-collapse border border-black text-[8pt]">
-            <thead className="bg-gray-100 font-bold text-center">
-              <tr>
-                <th className="border border-black p-1">No.</th><th className="border border-black p-1">Aktivitas Penilaian</th><th className="border border-black p-1">Deskripsi</th><th className="border border-black p-1">Metode Evaluasi</th>
-                {rpsData?.cpmk?.map((cpmk) => <th key={cpmk.kode} className="border border-black p-1">{cpmk.kode}</th>)}
-                <th className="border border-black p-1">Total (%)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rpsData?.blueprint_penilaian?.aktivitas_penilaian?.map((row, idx) => (
-                <tr key={`${row.aktivitas}-${idx}`}>
-                  <td className={tdCenter}>{idx + 1}</td><td className={td}>{row.aktivitas}</td><td className={td}>{row.deskripsi}</td><td className={td}>{row.metode_evaluasi}</td>
-                  {rpsData?.cpmk?.map((cpmk) => <td key={cpmk.kode} className={tdCenter}>{row.bobot_per_cpmk?.find((item) => item.cpmk_ref === cpmk.kode)?.bobot || ''}</td>)}
-                  <td className={`${tdCenter} font-bold`}>{row.total_bobot}</td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="font-bold bg-gray-100"><td className="border border-black p-2 text-right" colSpan={4 + (rpsData?.cpmk?.length || 0)}>TOTAL</td><td className="border border-black p-2 text-center">100</td></tr>
-            </tfoot>
-          </table>
+          {(() => {
+            const fixedEvaluations = [
+              { aktivitas: "Kegiatan partisipatif", deskripsi: "Keaktifan mahasiswa dalam diskusi kelompok", metode: "Observasi langsung", totalBobot: 15 },
+              { aktivitas: "Hasil proyek", deskripsi: "Proyek mahasiswa (proyek, kasus, masalah)", metode: "-", totalBobot: 0 },
+              { aktivitas: "Tugas", deskripsi: "Tugas mandiri dan kelompok", metode: "Non tes:\nResume\n\nMakalah\nPresentasi\nDemonstrasi", totalBobot: 45 },
+              { aktivitas: "Quis", deskripsi: "Quis harian di kelas", metode: "-", totalBobot: 0 },
+              { aktivitas: "UTS", deskripsi: "Ujian Tengah Semester", metode: "Tes: tulis", totalBobot: 20 },
+              { aktivitas: "UAS", deskripsi: "Ujian Akhir Semester", metode: "Tes: tulis", totalBobot: 20 }
+            ];
+            const cpmkCount = Math.max(1, rpsData?.cpmk?.length || 1);
+            return (
+              <table className="w-full border-collapse border border-black text-[8pt]">
+                <thead className="bg-gray-100 font-bold text-center">
+                  <tr>
+                    <th className="border border-black p-1">No.</th>
+                    <th className="border border-black p-1">Aktivitas Penilaian</th>
+                    <th className="border border-black p-1">Deskripsi</th>
+                    <th className="border border-black p-1">Metode Evaluasi</th>
+                    {rpsData?.cpmk?.map((cpmk) => <th key={cpmk.kode} className="border border-black p-1">{cpmk.kode}</th>)}
+                    <th className="border border-black p-1">Total (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fixedEvaluations.map((row, idx) => (
+                    <tr key={`${row.aktivitas}-${idx}`}>
+                      <td className={tdCenter}>{idx + 1}</td>
+                      <td className={td}>{row.aktivitas}</td>
+                      <td className={`${td} whitespace-pre-wrap`}>{row.deskripsi}</td>
+                      <td className={`${td} whitespace-pre-wrap`}>{row.metode}</td>
+                      {rpsData?.cpmk?.map((cpmk) => {
+                        if (row.totalBobot === 0) return <td key={cpmk.kode} className={tdCenter}></td>;
+                        const val = row.totalBobot / cpmkCount;
+                        const disp = Number.isInteger(val) ? val : val.toFixed(1);
+                        return <td key={cpmk.kode} className={tdCenter}>{disp}</td>;
+                      })}
+                      <td className={`${tdCenter} font-bold`}>{row.totalBobot > 0 ? `${row.totalBobot}%` : ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="font-bold bg-gray-100"><td className="border border-black p-2 text-right" colSpan={4 + (rpsData?.cpmk?.length || 0)}>TOTAL</td><td className="border border-black p-2 text-center">100%</td></tr>
+                </tfoot>
+              </table>
+            );
+          })()}
         </section>
 
         <section className="pt-3">
