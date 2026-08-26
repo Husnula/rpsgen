@@ -1881,54 +1881,148 @@ ATURAN:
           </table>
           </div>
 
-          {rpsData?.rencana_tugas?.map((tugas, idx) => (
+          {rpsData?.rencana_tugas?.map((tugas, idx) => {
+            const sourceMatrixRow = rpsData?.matriks_pembelajaran?.find((m) => m.task_code === tugas.task_code);
+            const bobotTugas = sourceMatrixRow?.bobot_nilai || '0%';
+            return (
             <div key={idx} className="pt-4 mb-6 break-inside-avoid export-page">
-              <h3 className="font-bold text-[10.5pt] mb-2 uppercase text-center border-t-2 border-black pt-3">Rencana Tugas Mahasiswa</h3>
               <table className="w-full border-collapse border border-black text-[9.5pt]">
                 <tbody>
-                  <tr><td className={`${td} font-bold w-[20%] bg-gray-50`}>Mata Kuliah</td><td className={td} colSpan={3}>{formData.mkName} ({formData.mkCode}) — {formData.sks} SKS (T:{formData.sksTeori}, P:{formData.sksPraktik})</td></tr>
-                  <tr><td className={`${td} font-bold bg-gray-50`}>Kode/Judul Tugas</td><td className={td} colSpan={3}>{tugas.task_code} — {tugas.judul}</td></tr>
                   <tr>
-                    <td className={`${td} font-bold bg-gray-50`}>Bentuk Tugas</td><td className={td}>{tugas.bentuk_tugas}</td>
-                    <td className={`${td} font-bold bg-gray-50`}>Waktu Pengerjaan</td><td className={td}>{tugas.waktu_pengerjaan}</td>
-                  </tr>
-                  <tr>
-                    <td className={`${td} font-bold bg-gray-50`}>Sub-CPMK Terkait</td>
-                    <td className={td} colSpan={3}>
-                      <span className="font-bold">{tugas.sub_cpmk_ref}</span> — {subCpmkByCode[tugas.sub_cpmk_ref]?.teks || '-'}
+                    <td className="border border-black text-center w-[15%] p-1">
+                      {logoBase64 ? (
+                        <img src={logoBase64} alt="Logo" className="w-14 h-14 object-contain mx-auto" />
+                      ) : (
+                        <span className="font-bold text-lg leading-tight">LOGO<br/>PT</span>
+                      )}
+                    </td>
+                    <td className="border border-black p-2 align-middle font-bold text-[11pt] uppercase bg-gray-50" colSpan={3}>
+                      NAMA INSTITUSI:<br/>
+                      STIKES DIAN HUSADA MOJOKERTO
                     </td>
                   </tr>
+                  
                   <tr>
-                    <td className={`${td} font-bold bg-gray-50`}>Deskripsi Tugas</td>
-                    <td className={td} colSpan={3}>
-                      <div><span className="font-bold">Objek Garapan:</span> {tugas.deskripsi?.objek_garapan}</div>
+                    <td className="border border-black p-1 text-center font-bold bg-gray-200 uppercase text-[10.5pt]" colSpan={4}>
+                      RENCANA TUGAS MAHASISWA
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td className={`${td} font-bold w-[25%]`}>MATA KULIAH</td>
+                    <td className={td} colSpan={3}>{formData.mkName}</td>
+                  </tr>
+                  <tr>
+                    <td className={`${td} font-bold`}>KODE</td>
+                    <td className={td}>{formData.mkCode}</td>
+                    <td className={`${td} font-bold w-[15%]`}>sks {formData.sks}</td>
+                    <td className={`${td} font-bold w-[25%]`}>SEMESTER {formData.semester}</td>
+                  </tr>
+                  <tr>
+                    <td className={`${td} font-bold`}>DOSEN PENGAMPU</td>
+                    <td className={td} colSpan={3}>{selectedLecturer?.nama || '-'}</td>
+                  </tr>
+
+                  <tr>
+                    <td className={`${td} font-bold bg-gray-200 uppercase`} colSpan={2}>BENTUK TUGAS</td>
+                    <td className={`${td} font-bold bg-gray-200 uppercase`} colSpan={2}>WAKTU PENGERJAAN TUGAS</td>
+                  </tr>
+                  <tr>
+                    <td className={td} colSpan={2}>{tugas.bentuk_tugas}</td>
+                    <td className={td} colSpan={2}>{tugas.waktu_pengerjaan}</td>
+                  </tr>
+
+                  <tr>
+                    <td className={`${td} font-bold bg-gray-200 uppercase`} colSpan={4}>JUDUL TUGAS</td>
+                  </tr>
+                  <tr>
+                    <td className={td} colSpan={4}>{tugas.task_code} — {tugas.judul}</td>
+                  </tr>
+
+                  <tr>
+                    <td className={`${td} font-bold bg-gray-200 uppercase`} colSpan={4}>SUB CAPAIAN PEMBELAJARAN MATA KULIAH</td>
+                  </tr>
+                  <tr>
+                    <td className={td} colSpan={4}><span className="font-bold">{tugas.sub_cpmk_ref}</span> — {subCpmkByCode[tugas.sub_cpmk_ref]?.teks || '-'}</td>
+                  </tr>
+
+                  <tr>
+                    <td className={`${td} font-bold bg-gray-200 uppercase`} colSpan={4}>DISKRIPSI TUGAS</td>
+                  </tr>
+                  <tr>
+                    <td className={td} colSpan={4}>
+                      <div><span className="font-bold">Obyek garap:</span> {tugas.deskripsi?.objek_garapan}</div>
                       <div><span className="font-bold">Batasan:</span> {tugas.deskripsi?.batasan}</div>
                       <div><span className="font-bold">Manfaat:</span> {tugas.deskripsi?.manfaat}</div>
                     </td>
                   </tr>
+
                   <tr>
-                    <td className={`${td} font-bold bg-gray-50`}>Metode Pengerjaan</td>
-                    <td className={td} colSpan={3}>
+                    <td className={`${td} font-bold bg-gray-200 uppercase`} colSpan={4}>METODE PENGERJAAN TUGAS</td>
+                  </tr>
+                  <tr>
+                    <td className={td} colSpan={4}>
                       <ol className="list-decimal list-outside ml-4 space-y-0.5">
                         {tugas.metode_pengerjaan?.map((m, i) => <li key={i}>{m}</li>)}
                       </ol>
                     </td>
                   </tr>
-                  <tr><td className={`${td} font-bold bg-gray-50`}>Bentuk Luaran</td><td className={td} colSpan={3}>{tugas.luaran}</td></tr>
+
                   <tr>
-                    <td className={`${td} font-bold bg-gray-50`}>Indikator, Kriteria & Bobot</td>
-                    <td className={td} colSpan={3}>
-                      <ul className="list-disc list-outside ml-4 space-y-0.5">
+                    <td className={`${td} font-bold bg-gray-200 uppercase`} colSpan={4}>BENTUK DAN FORMAT LUARAN</td>
+                  </tr>
+                  <tr>
+                    <td className={td} colSpan={4}>
+                      <div className="font-bold">a. Obyek Garapan:</div>
+                      <div className="ml-4 mb-1">{tugas.deskripsi?.objek_garapan}</div>
+                      <div className="font-bold">b. Bentuk Luaran:</div>
+                      <div className="ml-4">{tugas.luaran}</div>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td className={`${td} font-bold bg-gray-200 uppercase`} colSpan={4}>INDIKATOR, KRITERIA DAN BOBOT PENILAIAN</td>
+                  </tr>
+                  <tr>
+                    <td className={td} colSpan={4}>
+                      <div className="font-bold mb-1">Indikator:</div>
+                      <ul className="list-disc list-outside ml-6 space-y-0.5 mb-2">
                         {tugas.indikator_kriteria_bobot?.map((ib, i) => (
-                          <li key={i}>{ib.indikator} — {ib.kriteria} ({ib.bobot})</li>
+                          <li key={`ind-${i}`}>{ib.indikator}</li>
+                        ))}
+                      </ul>
+                      <div className="font-bold mb-1">Kriteria:</div>
+                      <ul className="list-disc list-outside ml-6 space-y-0.5">
+                        {tugas.indikator_kriteria_bobot?.map((ib, i) => (
+                          <li key={`kri-${i}`}>{ib.kriteria}</li>
                         ))}
                       </ul>
                     </td>
                   </tr>
-                  <tr><td className={`${td} font-bold bg-gray-50`}>Jadwal Pelaksanaan</td><td className={td} colSpan={3}>{tugas.jadwal}</td></tr>
+
                   <tr>
-                    <td className={`${td} font-bold bg-gray-50`}>Pustaka</td>
-                    <td className={td} colSpan={3}>
+                    <td className={`${td} font-bold bg-gray-200 uppercase`} colSpan={4}>JADWAL PELAKSANAAN</td>
+                  </tr>
+                  <tr>
+                    <td className={`${td} w-[50%]`} colSpan={2}>Pengumpulan tugas {tugas.jadwal}</td>
+                    <td className={td} colSpan={2}></td>
+                  </tr>
+
+                  <tr>
+                    <td className={`${td} font-bold bg-gray-200 uppercase`} colSpan={4}>LAIN-LAIN</td>
+                  </tr>
+                  <tr>
+                    <td className={td} colSpan={4}>
+                      Bobot penilaian tugas ini adalah {bobotTugas} dari total penilaian tugas dari seluruh Mata Kuliah.<br/>
+                      Tugas dikerjakan secara mandiri;
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td className={`${td} font-bold bg-gray-200 uppercase`} colSpan={4}>DAFTAR RUJUKAN</td>
+                  </tr>
+                  <tr>
+                    <td className={td} colSpan={4}>
                       <ol className="list-decimal list-outside ml-4">
                         {tugas.pustaka?.map((item, i) => <li key={i}>{item}</li>)}
                       </ol>
@@ -1937,7 +2031,8 @@ ATURAN:
                 </tbody>
               </table>
             </div>
-          ))}
+            );
+          })}
 
           {rpsData?.blueprint_penilaian?.rubrik_per_cpmk?.map((rubrik, rubrikIndex) => (
             <div key={rubrik.cpmk_ref} className="pt-4 mb-6 break-inside-avoid export-page">
