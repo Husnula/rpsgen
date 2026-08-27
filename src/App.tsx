@@ -434,6 +434,28 @@ const assertRpsConsistency = (data) => {
     }
   });
 
+  const totalTasks = (data.rencana_tugas || []).length;
+  if (totalTasks > 0 && (totalTasks < 7 || totalTasks > 9)) {
+    throw new Error(`Jumlah Rencana Tugas Mahasiswa (RTM) harus antara 7 hingga 9, tetapi AI menghasilkan ${totalTasks} tugas.`);
+  }
+
+  const uniqueCpls = new Set();
+  (data.cpmk || []).forEach(cpmk => {
+    (cpmk.cpl_terkait || []).forEach(code => uniqueCpls.add(code));
+  });
+  
+  const cplCounts = { S: 0, P: 0, KU: 0, KK: 0 };
+  uniqueCpls.forEach(code => {
+    if (code.startsWith('S')) cplCounts.S++;
+    else if (code.startsWith('P')) cplCounts.P++;
+    else if (code.startsWith('KU')) cplCounts.KU++;
+    else if (code.startsWith('KK') || code.startsWith('KS')) cplCounts.KK++;
+  });
+  
+  if (cplCounts.S > 1 || cplCounts.P > 1 || cplCounts.KU > 1 || cplCounts.KK > 1) {
+    throw new Error(`Komposisi CPL melebihi batas (Maks: 1 S, 1 P, 1 KU, 1 KK). Saat ini: ${cplCounts.S} S, ${cplCounts.P} P, ${cplCounts.KU} KU, ${cplCounts.KK} KK.`);
+  }
+
   // Pustaka validation has been moved to auto-retry phase 1
 };
 
@@ -632,7 +654,7 @@ Konteks Visi-Misi Prodi: ${visiMisiContext}
 Daftar CPL-PRODI yang tersedia: ${cplList}
 
 TUGAS:
-1. Pilih MAKSIMAL 5 CPL-PRODI yang paling relevan dengan mata kuliah ini. JANGAN lebih dari 5.
+1. Pilih TEPAT 4 CPL-PRODI yang paling relevan dengan mata kuliah ini dengan ketentuan: 1 poin Sikap (S), 1 poin Pengetahuan (P), 1 poin Keterampilan Umum (KU), dan 1 poin Keterampilan Khusus (KK).
 2. Buat 4-6 CPMK terkait CPL. Setiap rumusan wajib berbentuk "Mahasiswa mampu + SATU KKO terukur + objek kemampuan + konteks/kriteria".
 3. Gunakan KKO yang teramati dan terukur, hindari penggunaan kata yang ambigu jika memungkinkan, namun fokuskan pada keluwesan dan makna capaian akademis.
 4. Jika memilih CPL sikap (TRS), minimal satu CPMK/Sub-CPMK wajib memakai KKO afektif yang teramati (misalnya menunjukkan, mematuhi, mempertahankan, mengintegrasikan) dan indikatornya nanti dapat dinilai.
@@ -716,9 +738,17 @@ Bentuk:
 (isi bentuk, misal non-test, Resume)
 8. Total bobot nilai = 100%. Pastikan merujuk pada "Rumus Evaluasi & Bobot Nilai Akhir" di panduan untuk menentukan bobot harian (non-ujian).
 9. PENTING: Anda WAJIB mengisi objek 'metode_luring' (dengan field 'bentuk', 'metode', 'penugasan', 'alokasi') dan 'metode_daring' (dengan field 'bentuk', 'metode', 'penugasan') untuk setiap pertemuan minggu (selain ujian).
-10. JIKA baris tersebut memiliki penugasan, field 'penugasan' WAJIB diisi dengan format "Tugas-[Nomor] — [Judul Tugas]" (contoh: "Tugas-1 — Resume Etika Profesi Radiologi"). Nomor tugas harus berurutan.`;
+10. JIKA baris tersebut memiliki penugasan, field 'penugasan' WAJIB diisi dengan format "Tugas-[Nomor] — [Judul Tugas]" (contoh: "Tugas-1 — Resume Etika Profesi Radiologi"). Nomor tugas harus berurutan. PENTING: Anda WAJIB membuat antara 7 hingga 9 penugasan (RTM) sepanjang semester ini, tidak boleh kurang dan tidak boleh lebih.`;
 
-      const data2raw = await callGemini(prompt2, schema2, apiKeys);
+      const validateData2 = (data: any) => {
+        const tasks = (data?.matriks_pembelajaran || []).filter((row: any) => row.task_required && row.task_code);
+        if (tasks.length < 7 || tasks.length > 9) {
+          return `Jumlah Rencana Tugas (task_required=true) harus antara 7 hingga 9. Saat ini AI menghasilkan ${tasks.length} tugas.`;
+        }
+        return null;
+      };
+
+      const data2raw = await callGemini(prompt2, schema2, apiKeys, validateData2);
       
       const sanitizeRef = (str, prefix) => {
         if (!str) return str;
