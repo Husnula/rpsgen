@@ -1501,7 +1501,7 @@ ATURAN:
                   </div>
                 </td>
                 <td colSpan={4} style={{ width: '70%', verticalAlign: 'middle', textAlign: 'center' }} className="border border-black p-2">
-                  <h1 className="text-base font-bold uppercase mb-1" style={{ textAlign: 'center', margin: 0 }}>ILMU KEPERAWATAN, STIKES DIAN HUSADA MOJOKERTO</h1>
+                  <h1 className="text-base font-bold uppercase mb-1" style={{ textAlign: 'center', margin: 0 }}>ILMU RADIOLOGI, STIKES DIAN HUSADA MOJOKERTO</h1>
                 </td>
                 <td style={{ width: '15%', verticalAlign: 'middle', textAlign: 'center' }} className="border border-black p-2 font-bold text-[9pt]">
                   Kode<br />Dokumen<br /><span className="font-normal">{rpsData?.kode_dokumen || ''}</span>
@@ -1862,6 +1862,7 @@ ATURAN:
         )}
 
         {/* HALAMAN 5: PORTOFOLIO PENILAIAN */}
+        {false && (
         <div className="page-break pt-4">
           <div className="export-page">
           <h3 className="font-bold text-[10.5pt] mb-2 text-center uppercase">
@@ -1905,6 +1906,8 @@ ATURAN:
             </tbody>
           </table>
           </div>
+        </div>
+        )}
 
           {rpsData?.rencana_tugas?.map((tugas, idx) => {
             const sourceMatrixRow = rpsData?.matriks_pembelajaran?.find((m) => m.task_code === tugas.task_code);

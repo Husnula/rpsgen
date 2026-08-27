@@ -4,7 +4,8 @@ export const lecturers = [
   { id: '3', nama: 'Taufiqurrahman, S.Tr Kes, M.Tr.ID', nidn: '5845776677130172', email: 'taufiqurrahmen@gmail.com' },
   { id: '4', nama: 'Aprilia Dwi Ardianti, S.Kep, M.KM', nidn: '8757767668230372', email: 'apriliadwiardianti@gmail.com' },
   { id: '5', nama: 'Prapti Indriyani, Dipl.Rad, S.AB, M.Tr.ID', nidn: '6438753654230112', email: 'indrimenik61@gmail.com' },
-  { id: '6', nama: 'Mochamad Bayu Andika, S.Si, M.Tr.Id', nidn: '4961766667130282', email: 'andika.ardi@yahoo.com' }
+  { id: '6', nama: 'Mochamad Bayu Andika, S.Si, M.Tr.Id', nidn: '4961766667130282', email: 'andika.ardi@yahoo.com' },
+  { id: '7', nama: 'Sutomo, S.Kep.,Ns., M.Kep', nidn: '', email: '' }
 ];
 
 export const courses = [
