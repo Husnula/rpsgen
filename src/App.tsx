@@ -632,7 +632,8 @@ Konteks Visi-Misi Prodi: ${visiMisiContext}
 Daftar CPL-PRODI yang tersedia: ${cplList}
 
 TUGAS:
-1. Pilih HANYA CPL-PRODI yang relevan (misal TRS-1)2. Buat 4-6 CPMK terkait CPL. Setiap rumusan wajib berbentuk "Mahasiswa mampu + SATU KKO terukur + objek kemampuan + konteks/kriteria".
+1. Pilih MAKSIMAL 4 CPL-PRODI yang paling relevan dengan mata kuliah ini. JANGAN lebih dari 4.
+2. Buat 4-6 CPMK terkait CPL. Setiap rumusan wajib berbentuk "Mahasiswa mampu + SATU KKO terukur + objek kemampuan + konteks/kriteria".
 3. Gunakan KKO yang teramati dan terukur, hindari penggunaan kata yang ambigu jika memungkinkan, namun fokuskan pada keluwesan dan makna capaian akademis.
 4. Jika memilih CPL sikap (TRS), minimal satu CPMK/Sub-CPMK wajib memakai KKO afektif yang teramati (misalnya menunjukkan, mematuhi, mempertahankan, mengintegrasikan) dan indikatornya nanti dapat dinilai.
 5. Buat 5-12 Sub-CPMK unik terkait tepat satu CPMK. Semua teks harus diawali "Mahasiswa mampu ".
@@ -743,7 +744,7 @@ Bentuk:
       const uniqueTaskRows = Array.from(new Map(data2.matriks_pembelajaran.filter((row) => row.task_required && row.task_code).map((row) => [row.task_code, row])).values());
       const taskListText = uniqueTaskRows.map((row) => {
         const subText = data1.sub_cpmk.find((sub) => sub.kode === row.sub_cpmk_ref)?.teks || '-';
-        return `${row.task_code}; minggu=${row.minggu_ke}; sub_cpmk=${row.sub_cpmk_ref}; rumusan=${subText}; indikator=${row.indikator}; materi=${row.materi}; bentuk_penilaian=${row.kriteria_bentuk}`;
+        return `${row.task_code}; minggu=${row.minggu_ke}; sub_cpmk=${row.sub_cpmk_ref}; rumusan=${subText}; indikator=${row.indikator}; materi=${row.materi || '-'}; bentuk_penilaian=${row.kriteria_bentuk}; penugasan_luring=${row.metode_luring?.penugasan || '-'}; penugasan_daring=${row.metode_daring?.penugasan || '-'}`;
       }).join('\n');
 
       setGenPhase('Menyusun Rencana Tugas dan Blueprint Penilaian...');
@@ -806,7 +807,8 @@ ATURAN:
 2. Setiap rencana tugas wajib mengukur Sub-CPMK, indikator, materi, dan bentuk penilaian pada baris tugas yang sama.
 3. Kolom CPL wajib memakai kode CPL resmi (TRS/TRP/TRKS/TRKU), bukan kode generik seperti CPL-1.
 4. PENTING: Semua kolom referensi kode (cpmk_ref, sub_cpmk_ref, dll) HANYA BOLEH berisi TEPAT SATU KODE valid.
-5. Gunakan indikator, kriteria, dan bobot sesuai "Database Instrumen dan Rubrik Penilaian Standar" di Panduan.`;
+5. Gunakan indikator, kriteria, dan bobot sesuai "Database Instrumen dan Rubrik Penilaian Standar" di Panduan.
+6. PENTING: Rincian deskripsi tugas (bentuk dan uraian) HARUS mengacu pada 'penugasan_luring' atau 'penugasan_daring' yang diberikan di Tugas Wajib di atas agar sinkron dengan Matriks.`;
 
       const data3a = await callGemini(prompt3a, schema3a, apiKeys);
 
@@ -2418,10 +2420,11 @@ ATURAN:
         <section className="pt-3">
           <h3 className="font-bold text-[10pt] mb-2 uppercase">Rencana Evaluasi Ketercapaian Bobot CPMK</h3>
           {(() => {
+            const hasPraktek = (formData?.sksPraktik || 0) > 0;
             const fixedEvaluations = [
-              { aktivitas: "Kegiatan partisipatif", deskripsi: "Keaktifan mahasiswa dalam diskusi kelompok", metode: "Observasi langsung", totalBobot: 15 },
-              { aktivitas: "Hasil proyek", deskripsi: "Proyek mahasiswa (proyek, kasus, masalah)", metode: "-", totalBobot: 0 },
-              { aktivitas: "Tugas", deskripsi: "Tugas mandiri dan kelompok", metode: "Non tes:\nResume\n\nMakalah\nPresentasi\nDemonstrasi", totalBobot: 45 },
+              { aktivitas: "Kegiatan partisipatif", deskripsi: "Keaktifan mahasiswa dalam diskusi kelompok", metode: "Observasi langsung", totalBobot: hasPraktek ? 10 : 15 },
+              { aktivitas: "Hasil proyek / Praktik", deskripsi: "Proyek mahasiswa atau ujian praktik", metode: hasPraktek ? "Observasi / Rubrik" : "-", totalBobot: hasPraktek ? 30 : 0 },
+              { aktivitas: "Tugas", deskripsi: "Tugas mandiri dan kelompok", metode: "Non tes:\nResume\n\nMakalah\nPresentasi\nDemonstrasi", totalBobot: hasPraktek ? 20 : 45 },
               { aktivitas: "Quis", deskripsi: "Quis harian di kelas", metode: "-", totalBobot: 0 },
               { aktivitas: "UTS", deskripsi: "Ujian Tengah Semester", metode: "Tes: tulis", totalBobot: 20 },
               { aktivitas: "UAS", deskripsi: "Ujian Akhir Semester", metode: "Tes: tulis", totalBobot: 20 }
