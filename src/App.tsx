@@ -632,7 +632,7 @@ Konteks Visi-Misi Prodi: ${visiMisiContext}
 Daftar CPL-PRODI yang tersedia: ${cplList}
 
 TUGAS:
-1. Pilih MAKSIMAL 4 CPL-PRODI yang paling relevan dengan mata kuliah ini. JANGAN lebih dari 4.
+1. Pilih MAKSIMAL 5 CPL-PRODI yang paling relevan dengan mata kuliah ini. JANGAN lebih dari 5.
 2. Buat 4-6 CPMK terkait CPL. Setiap rumusan wajib berbentuk "Mahasiswa mampu + SATU KKO terukur + objek kemampuan + konteks/kriteria".
 3. Gunakan KKO yang teramati dan terukur, hindari penggunaan kata yang ambigu jika memungkinkan, namun fokuskan pada keluwesan dan makna capaian akademis.
 4. Jika memilih CPL sikap (TRS), minimal satu CPMK/Sub-CPMK wajib memakai KKO afektif yang teramati (misalnya menunjukkan, mematuhi, mempertahankan, mengintegrasikan) dan indikatornya nanti dapat dinilai.
@@ -715,7 +715,8 @@ Kriteria:
 Bentuk:
 (isi bentuk, misal non-test, Resume)
 8. Total bobot nilai = 100%. Pastikan merujuk pada "Rumus Evaluasi & Bobot Nilai Akhir" di panduan untuk menentukan bobot harian (non-ujian).
-9. PENTING: Anda WAJIB mengisi objek 'metode_luring' (dengan field 'bentuk', 'metode', 'penugasan', 'alokasi') dan 'metode_daring' (dengan field 'bentuk', 'metode', 'penugasan') untuk setiap pertemuan minggu (selain ujian).`;
+9. PENTING: Anda WAJIB mengisi objek 'metode_luring' (dengan field 'bentuk', 'metode', 'penugasan', 'alokasi') dan 'metode_daring' (dengan field 'bentuk', 'metode', 'penugasan') untuk setiap pertemuan minggu (selain ujian).
+10. JIKA baris tersebut memiliki penugasan, field 'penugasan' WAJIB diisi dengan format "Tugas-[Nomor] — [Judul Tugas]" (contoh: "Tugas-1 — Resume Etika Profesi Radiologi"). Nomor tugas harus berurutan.`;
 
       const data2raw = await callGemini(prompt2, schema2, apiKeys);
       
@@ -808,7 +809,7 @@ ATURAN:
 3. Kolom CPL wajib memakai kode CPL resmi (TRS/TRP/TRKS/TRKU), bukan kode generik seperti CPL-1.
 4. PENTING: Semua kolom referensi kode (cpmk_ref, sub_cpmk_ref, dll) HANYA BOLEH berisi TEPAT SATU KODE valid.
 5. Gunakan indikator, kriteria, dan bobot sesuai "Database Instrumen dan Rubrik Penilaian Standar" di Panduan.
-6. PENTING: Rincian deskripsi tugas (bentuk dan uraian) HARUS mengacu pada 'penugasan_luring' atau 'penugasan_daring' yang diberikan di Tugas Wajib di atas agar sinkron dengan Matriks.`;
+6. PENTING: Nilai kolom 'judul' HARUS SAMA PERSIS (copy-paste) dengan teks 'penugasan_luring' atau 'penugasan_daring' yang ada di daftar Tugas Wajib di atas (misal: "Tugas-1 — Resume Etika Profesi Radiologi"). Rincian deskripsi tugas juga harus sinkron.`;
 
       const data3a = await callGemini(prompt3a, schema3a, apiKeys);
 
