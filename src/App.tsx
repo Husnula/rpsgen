@@ -1862,8 +1862,8 @@ ATURAN:
         )}
 
         {/* HALAMAN 5: PORTOFOLIO PENILAIAN */}
-        {false && (
         <div className="page-break pt-4">
+          {false && (
           <div className="export-page">
           <h3 className="font-bold text-[10.5pt] mb-2 text-center uppercase">
             Portofolio Penilaian dan Evaluasi Ketercapaian CPL Mahasiswa
@@ -1906,8 +1906,7 @@ ATURAN:
             </tbody>
           </table>
           </div>
-        </div>
-        )}
+          )}
 
           {rpsData?.rencana_tugas?.map((tugas, idx) => {
             const sourceMatrixRow = rpsData?.matriks_pembelajaran?.find((m) => m.task_code === tugas.task_code);
