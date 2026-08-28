@@ -509,6 +509,13 @@ export default function App() {
   });
 
   const [rpsData, setRpsData] = useState(null);
+  
+  // Progressive generation states
+  const [genProgress, setGenProgress] = useState(0);
+  const [loadingStage, setLoadingStage] = useState(0);
+  const [dataPart1, setDataPart1] = useState(null);
+  const [dataPart2, setDataPart2] = useState(null);
+  const [dataPart3a, setDataPart3a] = useState(null);
 
   const loadExternalScript = (src, globalName) => new Promise((resolve, reject) => {
     if (window[globalName]) {
@@ -594,10 +601,10 @@ Berikan HANYA teks deskripsinya saja dalam 1-2 paragraf, gaya bahasa formal akad
     }
   };
 
-  const generateRPS = async () => {
-    setIsGenerating(true);
+  
+  const generatePart1 = async () => {
+    setLoadingStage(1);
     setError(null);
-    setStep(2);
 
     const cplList = allCplFlat.map((c) => `${c.kode}: ${c.teks}`).join('\n');
     const visiMisiContext = `
@@ -656,7 +663,7 @@ Daftar CPL-PRODI yang tersedia: ${cplList}
 TUGAS:
 1. Pilih TEPAT 4 CPL-PRODI yang paling relevan dengan mata kuliah ini dengan ketentuan: 1 poin Sikap (S), 1 poin Pengetahuan (P), 1 poin Keterampilan Umum (KU), dan 1 poin Keterampilan Khusus (KK).
 2. Buat 4-6 CPMK terkait CPL. Setiap rumusan wajib berbentuk "Mahasiswa mampu + SATU KKO terukur + objek kemampuan + konteks/kriteria".
-3. Gunakan KKO yang teramati dan terukur, hindari penggunaan kata yang ambigu jika memungkinkan, namun fokuskan pada keluwesan dan makna capaian akademis.
+3. Gunakan KKO yang teramati dan terukur, hindari penggunaan kata yang ambigu jika memungkinkan. DILARANG KERAS menggunakan awalan kata kerja yang tidak dapat diukur secara langsung seperti "menguasai", "memahami", atau "mengetahui".
 4. Jika memilih CPL sikap (TRS), minimal satu CPMK/Sub-CPMK wajib memakai KKO afektif yang teramati (misalnya menunjukkan, mematuhi, mempertahankan, mengintegrasikan) dan indikatornya nanti dapat dinilai.
 5. Buat 5-12 Sub-CPMK unik terkait tepat satu CPMK. Semua teks harus diawali "Mahasiswa mampu ".
 6. Bahan kajian harus spesifik untuk setiap Sub-CPMK, bukan daftar umum.
@@ -665,14 +672,35 @@ TUGAS:
       const validateData1 = (data: any) => {
         if (!data?.cpmk || data.cpmk.length === 0) return "CPMK harus diisi.";
         if (!data?.sub_cpmk || data.sub_cpmk.length === 0) return "Sub-CPMK harus diisi.";
+        
+        const nonOperationalOpening = /^\s*(?:mahasiswa\s+mampu\s+)?(?:menguasai|memahami|mengetahui)\b/i;
+        for (const outcome of [...(data.cpmk || []), ...(data.sub_cpmk || [])]) {
+          if (nonOperationalOpening.test(outcome.teks || '')) {
+            return `${outcome.kode} harus diawali KKO yang dapat diamati/diukur, bukan "menguasai/memahami/mengetahui".`;
+          }
+        }
         return null;
       };
 
       const data1 = normalizeLearningOutcomeCodes(await callGemini(prompt1, schema1, apiKeys, validateData1));
+      setDataPart1(data1);
+      setGenProgress(1);
+    } catch (err: any) {
+      console.error(err);
+      setError(`Gagal menghasilkan Identitas & Capaian: ${err.message}`);
+    } finally {
+      setLoadingStage(0);
+      setGenPhase('');
+    }
+  };
 
+  const generatePart2 = async () => {
+    setLoadingStage(2);
+    setError(null);
+    try {
       setGenPhase('Menyusun matriks pembelajaran landscape 16 minggu...');
-      const cpmkListText = data1.cpmk.map((c) => `${c.kode}: ${c.teks}`).join('\n');
-      const subCpmkListText = data1.sub_cpmk.map((sub) => `${sub.kode} [${sub.cpmk_ref}]: ${sub.teks}`).join('\n');
+      const cpmkListText = dataPart1.cpmk.map((c: any) => `${c.kode}: ${c.teks}`).join('\n');
+      const subCpmkListText = dataPart1.sub_cpmk.map((sub: any) => `${sub.kode} [${sub.cpmk_ref}]: ${sub.teks}`).join('\n');
       const schema2 = {
         type: 'OBJECT',
         properties: {
@@ -692,16 +720,17 @@ TUGAS:
                     bentuk: { type: 'STRING' },
                     metode: { type: 'STRING' },
                     penugasan: { type: 'STRING' },
-                    alokasi: { type: 'STRING' }
-                  }
+                    alokasi: { type: 'STRING' },
+                  },
+                  required: ['bentuk', 'metode', 'alokasi']
                 },
-                metode_daring: { 
+                metode_daring: {
                   type: 'OBJECT',
                   properties: {
                     bentuk: { type: 'STRING' },
                     metode: { type: 'STRING' },
-                    penugasan: { type: 'STRING' }
-                  }
+                    penugasan: { type: 'STRING' },
+                  },
                 },
                 materi: { type: 'STRING' },
                 bobot_nilai: { type: 'STRING' },
@@ -750,13 +779,13 @@ Bentuk:
 
       const data2raw = await callGemini(prompt2, schema2, apiKeys, validateData2);
       
-      const sanitizeRef = (str, prefix) => {
+      const sanitizeRef = (str: string, prefix: string) => {
         if (!str) return str;
         return str.trim();
       };
 
       if (data2raw.matriks_pembelajaran) {
-        data2raw.matriks_pembelajaran = data2raw.matriks_pembelajaran.map(row => {
+        data2raw.matriks_pembelajaran = data2raw.matriks_pembelajaran.map((row: any) => {
           if (!isExamRow(row)) {
             row.sub_cpmk_ref = sanitizeRef(row.sub_cpmk_ref, 'Sub-CPMK');
             row.cpmk_ref = sanitizeRef(row.cpmk_ref, 'CPMK');
@@ -767,18 +796,40 @@ Bentuk:
 
       const reconciledMatrix = reconcileLearningMatrix(
         data2raw.matriks_pembelajaran,
-        data1.cpmk,
-        data1.sub_cpmk
+        dataPart1.cpmk,
+        dataPart1.sub_cpmk
       );
       const data2 = { matriks_pembelajaran: normalizeBobot(reconciledMatrix) };
-      data1.bahan_kajian = rebuildAlignedStudyMaterials(data2.matriks_pembelajaran);
-      const uniqueTaskRows = Array.from(new Map(data2.matriks_pembelajaran.filter((row) => row.task_required && row.task_code).map((row) => [row.task_code, row])).values());
-      const taskListText = uniqueTaskRows.map((row) => {
-        const subText = data1.sub_cpmk.find((sub) => sub.kode === row.sub_cpmk_ref)?.teks || '-';
+      
+      // update bahan_kajian in part 1 based on matrix
+      const updatedPart1 = { ...dataPart1 };
+      updatedPart1.bahan_kajian = rebuildAlignedStudyMaterials(data2.matriks_pembelajaran);
+      setDataPart1(updatedPart1);
+
+      setDataPart2(data2);
+      setGenProgress(2);
+    } catch (err: any) {
+      console.error(err);
+      setError(`Gagal menghasilkan Matriks Pembelajaran: ${err.message}`);
+    } finally {
+      setLoadingStage(0);
+      setGenPhase('');
+    }
+  };
+
+  const generatePart3 = async () => {
+    setLoadingStage(3);
+    setError(null);
+    try {
+      setGenPhase('Menyusun Rencana Tugas...');
+      const cpmkListText = dataPart1.cpmk.map((c: any) => `${c.kode}: ${c.teks}`).join('\n');
+      const subCpmkListText = dataPart1.sub_cpmk.map((sub: any) => `${sub.kode} [${sub.cpmk_ref}]: ${sub.teks}`).join('\n');
+      const uniqueTaskRows = Array.from(new Map(dataPart2.matriks_pembelajaran.filter((row: any) => row.task_required && row.task_code).map((row: any) => [row.task_code, row])).values());
+      const taskListText = uniqueTaskRows.map((row: any) => {
+        const subText = dataPart1.sub_cpmk.find((sub: any) => sub.kode === row.sub_cpmk_ref)?.teks || '-';
         return `${row.task_code}; minggu=${row.minggu_ke}; sub_cpmk=${row.sub_cpmk_ref}; rumusan=${subText}; indikator=${row.indikator}; materi=${row.materi || '-'}; bentuk_penilaian=${row.kriteria_bentuk}; penugasan_luring=${row.metode_luring?.penugasan || '-'}; penugasan_daring=${row.metode_daring?.penugasan || '-'}`;
       }).join('\n');
 
-      setGenPhase('Menyusun Rencana Tugas dan Blueprint Penilaian...');
       const schema3a = {
         type: 'OBJECT',
         properties: {
@@ -841,9 +892,45 @@ ATURAN:
 5. Gunakan indikator, kriteria, dan bobot sesuai "Database Instrumen dan Rubrik Penilaian Standar" di Panduan.
 6. PENTING: Nilai kolom 'judul' HARUS SAMA PERSIS (copy-paste) dengan teks 'penugasan_luring' atau 'penugasan_daring' yang ada di daftar Tugas Wajib di atas (misal: "Tugas-1 — Resume Etika Profesi Radiologi"). Rincian deskripsi tugas juga harus sinkron.`;
 
-      const data3a = await callGemini(prompt3a, schema3a, apiKeys);
+      const validateData3a = (data: any) => {
+        const allowedTaskCodes = new Set(uniqueTaskRows.map((r: any) => r.task_code));
+        const allowedSubCpmkCodes = new Set(dataPart1.sub_cpmk.map((s: any) => s.kode));
+        const generatedTasks = new Set((data?.rencana_tugas || []).map((t: any) => t.task_code));
+        
+        if (generatedTasks.size !== allowedTaskCodes.size) {
+          return `Jumlah Rencana Tugas (RTM) tidak sesuai! Anda wajib membuat TEPAT ${allowedTaskCodes.size} rencana tugas untuk semua task_code berikut: ${Array.from(allowedTaskCodes).join(', ')}. Saat ini Anda hanya membuat ${generatedTasks.size} rencana tugas.`;
+        }
 
+        for (const task of (data?.rencana_tugas || [])) {
+          if (!allowedTaskCodes.has(task.task_code)) {
+            return `task_code '${task.task_code}' tidak valid! Anda HANYA boleh membuat tugas untuk task_code berikut: ${Array.from(allowedTaskCodes).join(', ')}. Dilarang mengarang task_code baru.`;
+          }
+          if (!allowedSubCpmkCodes.has(task.sub_cpmk_ref)) {
+            return `sub_cpmk_ref '${task.sub_cpmk_ref}' pada tugas ${task.task_code} tidak valid! Harus kode sub-cpmk yang ada, contoh: Sub-CPMK-1.`;
+          }
+        }
+        return null;
+      };
+
+      const data3a = await callGemini(prompt3a, schema3a, apiKeys, validateData3a);
+      setDataPart3a(data3a);
+      setGenProgress(3);
+    } catch (err: any) {
+      console.error(err);
+      setError(`Gagal menghasilkan Rencana Tugas: ${err.message}`);
+    } finally {
+      setLoadingStage(0);
+      setGenPhase('');
+    }
+  };
+
+  const generatePart4 = async () => {
+    setLoadingStage(4);
+    setError(null);
+    try {
       setGenPhase('Menyusun blueprint & rubrik penilaian (Tahap akhir)...');
+      const cpmkListText = dataPart1.cpmk.map((c: any) => `${c.kode}: ${c.teks}`).join('\n');
+      const subCpmkListText = dataPart1.sub_cpmk.map((sub: any) => `${sub.kode} [${sub.cpmk_ref}]: ${sub.teks}`).join('\n');
       
       const schema3b = {
         type: 'OBJECT',
@@ -917,46 +1004,50 @@ ATURAN:
 8. PENTING: Semua kolom referensi kode (cpmk_ref, sub_cpmk_ref, dll) HANYA BOLEH berisi TEPAT SATU KODE valid.`;
 
       const data3b = await callGemini(prompt3b, schema3b, apiKeys);
+      const data3 = { ...dataPart3a, ...data3b };
       
-      const data3 = { ...data3a, ...data3b };
+      const sanitizeRef = (str: string, prefix: string) => {
+        if (!str) return str;
+        return str.trim();
+      };
 
       if (data3.portofolio) {
-        data3.portofolio = data3.portofolio.map(row => {
+        data3.portofolio = data3.portofolio.map((row: any) => {
           row.sub_cpmk_ref = sanitizeRef(row.sub_cpmk_ref, 'Sub-CPMK');
           row.cpmk = sanitizeRef(row.cpmk, 'CPMK');
           return row;
         });
       }
       if (data3.rencana_tugas) {
-        data3.rencana_tugas = data3.rencana_tugas.map(row => {
+        data3.rencana_tugas = data3.rencana_tugas.map((row: any) => {
           row.sub_cpmk_ref = sanitizeRef(row.sub_cpmk_ref, 'Sub-CPMK');
           return row;
         });
       }
       if (data3.blueprint_penilaian?.tahapan_penilaian) {
-        data3.blueprint_penilaian.tahapan_penilaian = data3.blueprint_penilaian.tahapan_penilaian.map(row => {
+        data3.blueprint_penilaian.tahapan_penilaian = data3.blueprint_penilaian.tahapan_penilaian.map((row: any) => {
           row.sub_cpmk_ref = sanitizeRef(row.sub_cpmk_ref, 'Sub-CPMK');
           row.cpmk_ref = sanitizeRef(row.cpmk_ref, 'CPMK');
           return row;
         });
       }
       if (data3.blueprint_penilaian?.kisi_soal) {
-        data3.blueprint_penilaian.kisi_soal = data3.blueprint_penilaian.kisi_soal.map(row => {
+        data3.blueprint_penilaian.kisi_soal = data3.blueprint_penilaian.kisi_soal.map((row: any) => {
           row.sub_cpmk_ref = sanitizeRef(row.sub_cpmk_ref, 'Sub-CPMK');
           return row;
         });
       }
       if (data3.blueprint_penilaian?.aktivitas_penilaian) {
-        data3.blueprint_penilaian.aktivitas_penilaian = data3.blueprint_penilaian.aktivitas_penilaian.map((row) => ({
+        data3.blueprint_penilaian.aktivitas_penilaian = data3.blueprint_penilaian.aktivitas_penilaian.map((row: any) => ({
           ...row,
-          bobot_per_cpmk: (row.bobot_per_cpmk || []).map((item) => ({
+          bobot_per_cpmk: (row.bobot_per_cpmk || []).map((item: any) => ({
             ...item,
             cpmk_ref: sanitizeRef(item.cpmk_ref, 'CPMK'),
           })),
         }));
       }
       if (data3.blueprint_penilaian?.rubrik_per_cpmk) {
-        data3.blueprint_penilaian.rubrik_per_cpmk = data3.blueprint_penilaian.rubrik_per_cpmk.map((rubric) => ({
+        data3.blueprint_penilaian.rubrik_per_cpmk = data3.blueprint_penilaian.rubrik_per_cpmk.map((rubric: any) => ({
           ...rubric,
           cpmk_ref: sanitizeRef(rubric.cpmk_ref, 'CPMK'),
         }));
@@ -964,28 +1055,29 @@ ATURAN:
 
       const reconciledData3 = reconcileGeneratedArtifacts(
         data3,
-        data2.matriks_pembelajaran,
-        data1.cpmk,
-        data1.sub_cpmk
+        dataPart2.matriks_pembelajaran,
+        dataPart1.cpmk,
+        dataPart1.sub_cpmk
       );
 
       reconciledData3.blueprint_penilaian = completeBlueprintData(
         data3.blueprint_penilaian,
-        data1.cpmk,
-        data1.sub_cpmk,
-        data2.matriks_pembelajaran
+        dataPart1.cpmk,
+        dataPart1.sub_cpmk,
+        dataPart2.matriks_pembelajaran
       );
 
-      const completeData = { ...data1, ...data2, ...reconciledData3 };
+      const completeData = { ...dataPart1, ...dataPart2, ...reconciledData3 };
       assertRpsConsistency(completeData);
+      
       setRpsData(completeData);
-      setStep(3);
-    } catch (err) {
+      setGenProgress(4);
+      setStep(3); // Go to preview/download page
+    } catch (err: any) {
       console.error(err);
-      setError(`Gagal menghasilkan RPS: ${err.message || 'respons AI tidak valid'}`);
-      setStep(1);
+      setError(`Gagal menghasilkan Blueprint Penilaian: ${err.message}`);
     } finally {
-      setIsGenerating(false);
+      setLoadingStage(0);
       setGenPhase('');
     }
   };
@@ -1405,19 +1497,66 @@ ATURAN:
         </div>
 
         {error && (
-          <div className="p-4 bg-red-50 text-red-700 rounded-lg flex items-start gap-3">
+          <div className="p-4 bg-red-50 text-red-700 rounded-lg flex items-start gap-3 mb-4">
             <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
             <p className="text-sm">{error}</p>
           </div>
         )}
 
-        <div className="pt-6 flex justify-end">
-          <button onClick={generateRPS}
-            disabled={!formData.mkName || !selectedLecturer || !selectedFasilitator || !selectedWaka || !formData.description || isGenerating}
-            className="bg-teal-600 hover:bg-teal-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-6 py-3.5 rounded-xl font-semibold flex items-center gap-2 transition-all active:scale-95">
-            <Wand2 className="w-5 h-5" />
-            {isGenerating ? 'Menyusun Dokumen Resmi...' : 'Generate RPS Sekarang'}
-          </button>
+        <div className="pt-6 border-t mt-6 space-y-4">
+          <h3 className="font-bold text-lg text-slate-800">Progres Pembuatan RPS</h3>
+          
+          <div className="flex items-center justify-between p-4 bg-white border rounded-lg shadow-sm">
+            <div>
+              <p className="font-semibold text-slate-800">Tahap 1: Identitas & Capaian (CPMK)</p>
+              {genProgress >= 1 && <p className="text-sm text-green-600">✅ Berhasil dirumuskan ({dataPart1?.cpmk?.length} CPMK, {dataPart1?.sub_cpmk?.length} Sub-CPMK)</p>}
+            </div>
+            <button onClick={generatePart1}
+              disabled={!formData.mkName || !selectedLecturer || !selectedFasilitator || !selectedWaka || !formData.description || loadingStage > 0}
+              className="bg-teal-600 hover:bg-teal-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2">
+              {loadingStage === 1 ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+              {genProgress >= 1 ? 'Generate Ulang' : 'Generate Bagian 1'}
+            </button>
+          </div>
+
+          <div className={`flex items-center justify-between p-4 bg-white border rounded-lg shadow-sm ${genProgress < 1 ? 'opacity-50' : ''}`}>
+            <div>
+              <p className="font-semibold text-slate-800">Tahap 2: Matriks Pembelajaran</p>
+              {genProgress >= 2 && <p className="text-sm text-green-600">✅ Matriks 16 minggu berhasil disusun</p>}
+            </div>
+            <button onClick={generatePart2}
+              disabled={genProgress < 1 || loadingStage > 0}
+              className="bg-teal-600 hover:bg-teal-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2">
+              {loadingStage === 2 ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+              {genProgress >= 2 ? 'Generate Ulang' : 'Generate Bagian 2'}
+            </button>
+          </div>
+
+          <div className={`flex items-center justify-between p-4 bg-white border rounded-lg shadow-sm ${genProgress < 2 ? 'opacity-50' : ''}`}>
+            <div>
+              <p className="font-semibold text-slate-800">Tahap 3: Rencana Tugas Mahasiswa</p>
+              {genProgress >= 3 && <p className="text-sm text-green-600">✅ {dataPart3a?.rencana_tugas?.length || 0} Rencana tugas terhubung dengan matriks</p>}
+            </div>
+            <button onClick={generatePart3}
+              disabled={genProgress < 2 || loadingStage > 0}
+              className="bg-teal-600 hover:bg-teal-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2">
+              {loadingStage === 3 ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+              {genProgress >= 3 ? 'Generate Ulang' : 'Generate Bagian 3'}
+            </button>
+          </div>
+
+          <div className={`flex items-center justify-between p-4 bg-white border rounded-lg shadow-sm ${genProgress < 3 ? 'opacity-50' : ''}`}>
+            <div>
+              <p className="font-semibold text-slate-800">Tahap 4: Blueprint & Rubrik Penilaian</p>
+              {genProgress >= 4 && <p className="text-sm text-green-600">✅ Blueprint lengkap, siap diekspor!</p>}
+            </div>
+            <button onClick={generatePart4}
+              disabled={genProgress < 3 || loadingStage > 0}
+              className="bg-teal-600 hover:bg-teal-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2">
+              {loadingStage === 4 ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+              Generate Bagian 4 (Akhir)
+            </button>
+          </div>
         </div>
       </div>
     </div>
