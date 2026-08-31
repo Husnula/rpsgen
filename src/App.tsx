@@ -1303,13 +1303,13 @@ ATURAN:
         </div>
         
         <div className="flex items-center gap-4">
-          <button 
+          {/* <button 
             onClick={() => setIsSettingsOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl font-semibold transition-colors"
           >
             <Settings className="w-4 h-4" />
             Pengaturan API
-          </button>
+          </button> */}
           
           <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
           <div className="flex flex-col">
