@@ -2,9 +2,12 @@ const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models
 
 const MODEL_CHAIN = [
   "gemini-2.5-flash",
-  "gemini-3.1-flash-lite",
   "gemini-2.5-flash-lite",
   "gemini-3-flash",
+  "gemini-3.1-flash-lite",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3.7-flash"
 ];
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -122,11 +125,16 @@ export const callGeminiWithFallback = async (prompt: string, apiKeys: string[], 
           attempts.push(`${tag} (att ${attempt}) → ${code}`);
           console.log(`[Gemini API] ${tag} att ${attempt} → ${code}`);
 
-          if (code === 401 || code === 403) {
+          if (code === 401) {
             keyInvalid = true; 
             break; // Break retry loop, go to next key
           }
-          if ([429, 503, 404, 500].includes(code)) {
+          if (code === 403 || code === 429) {
+            // 403 Forbidden (model tidak bisa diakses) atau 429 Rate Limit
+            // Pindah langsung ke model selanjutnya dalam chain
+            break; 
+          }
+          if ([503, 404, 500].includes(code)) {
             await delay(1000 * attempt); 
             continue; // Retry same model
           }
