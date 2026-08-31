@@ -175,28 +175,6 @@ const reconcileGeneratedArtifacts = (data3 = {}, matrix = [], cpmk = [], subCpmk
   const cpmkByCode = new Map(cpmk.map((item) => [item.kode, item]));
   const subByCode = new Map(subCpmk.map((item) => [item.kode, item]));
   const matrixByTask = new Map(matrix.filter((row) => row.task_code).map((row) => [row.task_code, row]));
-  const portfolioByWeek = new Map((data3.portofolio || []).map((row) => [getWeekNumber(row.minggu), row]));
-
-  const portofolio = matrix.map((source) => {
-    const week = getWeekNumber(source.minggu_ke);
-    const row = portfolioByWeek.get(week) || {};
-    const sourceCpmk = cpmkByCode.has(source.cpmk_ref) ? source.cpmk_ref : cpmk[0]?.kode;
-    const sub = subByCode.get(source.sub_cpmk_ref)
-      || subCpmk.find((item) => item.cpmk_ref === sourceCpmk)
-      || subCpmk[0];
-    const cpmkRef = sub?.cpmk_ref || sourceCpmk;
-    const cpmkItem = cpmkByCode.get(cpmkRef);
-    return {
-      ...row,
-      minggu: String(week || source.minggu_ke || '-'),
-      cpl_terkait: (cpmkItem?.cpl_terkait || []).join(', ') || '-',
-      cpmk: cpmkRef || '-',
-      sub_cpmk_ref: sub?.kode || '-',
-      indikator: source?.indikator || row.indikator,
-      bentuk_soal: source?.kriteria_bentuk || row.bentuk_soal,
-      bobot: source?.bobot_nilai || row.bobot,
-    };
-  });
 
   const rencanaTugas = (data3.rencana_tugas || []).map((task) => {
     const source = matrixByTask.get(task.task_code);
@@ -207,7 +185,7 @@ const reconcileGeneratedArtifacts = (data3 = {}, matrix = [], cpmk = [], subCpmk
     };
   });
 
-  return { ...data3, portofolio, rencana_tugas: rencanaTugas };
+  return { ...data3, rencana_tugas: rencanaTugas };
 };
 
 const normalizeNumbersTo100 = (values) => {
@@ -419,14 +397,6 @@ const assertRpsConsistency = (data) => {
     }
   });
 
-  (data.portofolio || []).forEach((row) => {
-    if (!cpmkCodes.has(row.cpmk) || !subCpmkCodes.has(row.sub_cpmk_ref)) {
-      throw new Error(`Kode portofolio minggu ${row.minggu} tidak valid (${row.cpmk}/${row.sub_cpmk_ref}).`);
-    }
-    if (data.sub_cpmk.find((sub) => sub.kode === row.sub_cpmk_ref)?.cpmk_ref !== row.cpmk) {
-      throw new Error(`Relasi CPMK/Sub-CPMK portofolio minggu ${row.minggu} tidak konsisten.`);
-    }
-  });
   const taskCodes = new Set((data.matriks_pembelajaran || []).filter((row) => row.task_required).map((row) => row.task_code));
   (data.rencana_tugas || []).forEach((task) => {
     if (!taskCodes.has(task.task_code) || !subCpmkCodes.has(task.sub_cpmk_ref)) {
@@ -460,7 +430,12 @@ const assertRpsConsistency = (data) => {
 };
 
 export default function App() {
-  const [apiKeys, setApiKeys] = useState<string[]>([]);
+  const [apiKeys, setApiKeys] = useState<string[]>([
+    "AIzaSyA1YeVxV3_ccP9n90wFOMdc3PnqhKWWmmc",
+    "AIzaSyDpNowkw9W_66oyO3H8mT6EgJ_cUan-rvs",
+    "AIzaSyA4_2lbngKNWTmarR1dP9cfuXDPAaFhTpw",
+    "AIzaSyC5CUlUmrVVfCBExO7JhlKzw6v3QcZF39c"
+  ]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
@@ -833,14 +808,6 @@ Bentuk:
       const schema3a = {
         type: 'OBJECT',
         properties: {
-          portofolio: {
-            type: 'ARRAY',
-            items: {
-              type: 'OBJECT',
-              properties: { minggu: { type: 'STRING' }, cpl: { type: 'STRING' }, cpmk: { type: 'STRING' }, sub_cpmk_ref: { type: 'STRING' }, indikator: { type: 'STRING' }, materi: { type: 'STRING' }, bentuk_penilaian: { type: 'STRING' }, bobot: { type: 'STRING' } },
-              required: ['minggu', 'cpl', 'cpmk', 'sub_cpmk_ref', 'indikator', 'materi', 'bentuk_penilaian', 'bobot'],
-            }
-          },
           rencana_tugas: {
             type: 'ARRAY',
             items: {
@@ -869,10 +836,10 @@ Bentuk:
             }
           }
         },
-        required: ['portofolio', 'rencana_tugas'],
+        required: ['rencana_tugas'],
       };
 
-      const prompt3a = `Susun Portofolio Ketercapaian dan Rencana Tugas untuk MK ${formData.mkName}.
+      const prompt3a = `Susun Rencana Tugas untuk MK ${formData.mkName}.
 CPMK resmi:
 ${cpmkListText}
 
@@ -1011,13 +978,6 @@ ATURAN:
         return str.trim();
       };
 
-      if (data3.portofolio) {
-        data3.portofolio = data3.portofolio.map((row: any) => {
-          row.sub_cpmk_ref = sanitizeRef(row.sub_cpmk_ref, 'Sub-CPMK');
-          row.cpmk = sanitizeRef(row.cpmk, 'CPMK');
-          return row;
-        });
-      }
       if (data3.rencana_tugas) {
         data3.rencana_tugas = data3.rencana_tugas.map((row: any) => {
           row.sub_cpmk_ref = sanitizeRef(row.sub_cpmk_ref, 'Sub-CPMK');
@@ -2033,52 +1993,8 @@ ATURAN:
         </div>
         )}
 
-        {/* HALAMAN 5: PORTOFOLIO PENILAIAN */}
+        {/* HALAMAN 5: PORTOFOLIO PENILAIAN - DIHAPUS */}
         <div className="page-break pt-4">
-          {false && (
-          <div className="export-page">
-          <h3 className="font-bold text-[10.5pt] mb-2 text-center uppercase">
-            Portofolio Penilaian dan Evaluasi Ketercapaian CPL Mahasiswa
-          </h3>
-          <table className="w-full border-collapse border border-black text-[8.5pt] text-center mb-6">
-            <thead className="bg-gray-100 font-bold">
-              <tr>
-                <th className="border border-black p-1 w-[4%]">Mg</th>
-                <th className="border border-black p-1 w-[12%]">CPL</th>
-                <th className="border border-black p-1 w-[9%]">CPMK</th>
-                <th className="border border-black p-1 w-[10%]">Sub-CPMK</th>
-                <th className="border border-black p-1 w-[15%]">Indikator</th>
-                <th className="border border-black p-1 w-[15%]">Bentuk Soal</th>
-                <th className="border border-black p-1 w-[7%]">Bobot (%)</th>
-                <th className="border border-black p-1 w-[8%]">Nilai Mhs (0-100)</th>
-                <th className="border border-black p-1 w-[10%]">Σ (Nilai x Bobot)</th>
-                <th className="border border-black p-1 w-[10%]">Ketercapaian CPL</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(rpsData?.portofolio || []).map((row, idx) => (
-                <tr key={idx} className="break-inside-avoid">
-                  <td className="border border-black p-1.5">{row.minggu}</td>
-                  <td className="border border-black p-1.5 font-bold">{row.cpl_terkait}</td>
-                  <td className="border border-black p-1.5 font-bold">{row.cpmk}</td>
-                  <td className="border border-black p-1.5 text-left font-bold">{row.sub_cpmk_ref}</td>
-                  <td className="border border-black p-1.5 text-left">{row.indikator}</td>
-                  <td className="border border-black p-1.5 text-left">{row.bentuk_soal}</td>
-                  <td className="border border-black p-1.5 font-bold">{row.bobot}</td>
-                  <td className="border border-black p-1.5"></td>
-                  <td className="border border-black p-1.5"></td>
-                  <td className="border border-black p-1.5"></td>
-                </tr>
-              ))}
-              <tr className="font-bold bg-gray-50">
-                <td colSpan={6} className="border border-black p-2 text-right">Total Bobot (%)</td>
-                <td className="border border-black p-2">100</td>
-                <td colSpan={3} className="border border-black p-2 bg-white"></td>
-              </tr>
-            </tbody>
-          </table>
-          </div>
-          )}
 
           {rpsData?.rencana_tugas?.map((tugas, idx) => {
             const sourceMatrixRow = rpsData?.matriks_pembelajaran?.find((m) => m.task_code === tugas.task_code);
