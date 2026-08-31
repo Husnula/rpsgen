@@ -773,12 +773,18 @@ Bentuk:
 (isi bentuk, misal non-test, Resume)
 8. Total bobot nilai = 100%. Pastikan merujuk pada "Rumus Evaluasi & Bobot Nilai Akhir" di panduan untuk menentukan bobot harian (non-ujian).
 9. PENTING: Anda WAJIB mengisi objek 'metode_luring' (dengan field 'bentuk', 'metode', 'penugasan', 'alokasi') dan 'metode_daring' (dengan field 'bentuk', 'metode', 'penugasan') untuk setiap pertemuan minggu (selain ujian).
-10. JIKA baris tersebut memiliki penugasan, field 'penugasan' WAJIB diisi dengan format "Tugas-[Nomor] — [Judul Tugas]" (contoh: "Tugas-1 — Resume Etika Profesi Radiologi"). Nomor tugas harus berurutan. PENTING: Anda WAJIB membuat antara 7 hingga 9 penugasan (RTM) sepanjang semester ini, tidak boleh kurang dan tidak boleh lebih.`;
+10. JIKA baris tersebut memiliki penugasan, field 'penugasan' WAJIB diisi dengan format "Tugas-[Nomor] — [Judul Tugas]" (contoh: "Tugas-1 — Resume Etika Profesi Radiologi"). Nomor tugas harus berurutan. PENTING: Anda WAJIB membuat antara 7 hingga 9 penugasan (RTM) sepanjang semester ini, tidak boleh kurang dan tidak boleh lebih.
+11. PENTING: Untuk field 'task_code' (jika task_required=true), WAJIB diisi HANYA dengan KODE PENDEK (contoh: "Tugas-1", "Tugas-2"). JANGAN pernah memasukkan judul tugas ke dalam field 'task_code'.`;
 
       const validateData2 = (data: any) => {
         const tasks = (data?.matriks_pembelajaran || []).filter((row: any) => row.task_required && row.task_code);
         if (tasks.length < 7 || tasks.length > 9) {
           return `Jumlah Rencana Tugas (task_required=true) harus antara 7 hingga 9. Saat ini AI menghasilkan ${tasks.length} tugas.`;
+        }
+        for (const t of tasks) {
+          if (!/^Tugas-\d+$/.test(t.task_code)) {
+            return `Format task_code '${t.task_code}' salah! task_code HANYA boleh berisi kode pendek seperti 'Tugas-1'. JANGAN memasukkan spasi atau judul tugas ke dalamnya.`;
+          }
         }
         return null;
       };
