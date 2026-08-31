@@ -15,6 +15,37 @@ const GraduationCap = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg"
 const Sparkles = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path></svg>;
 const Upload = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>;
 
+const SimulatedProgress = () => {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev < 60) return prev + Math.floor(Math.random() * 10) + 5;
+        if (prev < 85) return prev + Math.floor(Math.random() * 5) + 2;
+        if (prev < 99) return prev + 1;
+        return 99;
+      });
+    }, 800);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="mt-3 w-full sm:w-64">
+      <div className="flex justify-between text-xs text-teal-700 mb-1 font-semibold">
+        <span>Memproses...</span>
+        <span>{progress}%</span>
+      </div>
+      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+        <div 
+          className="bg-teal-500 h-2 rounded-full transition-all duration-300 ease-out" 
+          style={{ width: `${progress}%` }}
+        ></div>
+      </div>
+    </div>
+  );
+};
+
 // ============================================================
 // MASTER DATA — INSTITUSIONAL
 // ============================================================
@@ -1470,6 +1501,7 @@ ATURAN:
             <div>
               <p className="font-semibold text-slate-800">Tahap 1: Identitas & Capaian (CPMK)</p>
               {genProgress >= 1 && <p className="text-sm text-green-600">✅ Berhasil dirumuskan ({dataPart1?.cpmk?.length} CPMK, {dataPart1?.sub_cpmk?.length} Sub-CPMK)</p>}
+              {loadingStage === 1 && <SimulatedProgress />}
             </div>
             <button onClick={generatePart1}
               disabled={!formData.mkName || !selectedLecturer || !selectedFasilitator || !selectedWaka || !formData.description || loadingStage > 0}
@@ -1483,6 +1515,7 @@ ATURAN:
             <div>
               <p className="font-semibold text-slate-800">Tahap 2: Matriks Pembelajaran</p>
               {genProgress >= 2 && <p className="text-sm text-green-600">✅ Matriks 16 minggu berhasil disusun</p>}
+              {loadingStage === 2 && <SimulatedProgress />}
             </div>
             <button onClick={generatePart2}
               disabled={genProgress < 1 || loadingStage > 0}
@@ -1496,6 +1529,7 @@ ATURAN:
             <div>
               <p className="font-semibold text-slate-800">Tahap 3: Rencana Tugas Mahasiswa</p>
               {genProgress >= 3 && <p className="text-sm text-green-600">✅ {dataPart3a?.rencana_tugas?.length || 0} Rencana tugas terhubung dengan matriks</p>}
+              {loadingStage === 3 && <SimulatedProgress />}
             </div>
             <button onClick={generatePart3}
               disabled={genProgress < 2 || loadingStage > 0}
@@ -1509,6 +1543,7 @@ ATURAN:
             <div>
               <p className="font-semibold text-slate-800">Tahap 4: Blueprint & Rubrik Penilaian</p>
               {genProgress >= 4 && <p className="text-sm text-green-600">✅ Blueprint lengkap, siap diekspor!</p>}
+              {loadingStage === 4 && <SimulatedProgress />}
             </div>
             <button onClick={generatePart4}
               disabled={genProgress < 3 || loadingStage > 0}
