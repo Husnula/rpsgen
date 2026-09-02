@@ -185,14 +185,14 @@ const normalizeLearningOutcomeCodes = (data = {}) => {
   const normalizedCpmk = (data.cpmk || []).map((item, index) => {
     const kode = item.kode || `CPMK-${index + 1}`;
     cpmkCodeMap.set(item.kode, kode);
-    const teks = item.teks ? item.teks.replace(/^(?:Mahasiswa\s+mampu\s+)+/i, '').trim() : '';
+    const teks = item.teks ? item.teks.replace(/^\s*Mahasiswa\s+/i, '').trim() : '';
     const capitalizedTeks = teks ? teks.charAt(0).toUpperCase() + teks.slice(1) : '';
     return { ...item, kode, teks: capitalizedTeks };
   });
   const normalizedSubCpmk = (data.sub_cpmk || []).map((item, index) => {
     let teks = item.teks ? item.teks.trim() : '';
-    if (teks && !/^mahasiswa\s+mampu/i.test(teks)) {
-      teks = `Mahasiswa mampu ${teks.charAt(0).toLowerCase() + teks.slice(1)}`;
+    if (teks && !/^mahasiswa\s+/i.test(teks)) {
+      teks = /^mampu/i.test(teks) ? `Mahasiswa ${teks.charAt(0).toLowerCase() + teks.slice(1)}` : `Mahasiswa mampu ${teks.charAt(0).toLowerCase() + teks.slice(1)}`;
     }
     const capitalizedTeks = teks ? teks.charAt(0).toUpperCase() + teks.slice(1) : '';
     return {
@@ -668,8 +668,8 @@ ${cplList}
 TUGAS PENTING: Teks di atas adalah MASTER CPL. Anda WAJIB MENYARING OTOMATIS dan HANYA menulis CPL yang paling relevan dengan mata kuliah yang diketik.
 
 TUGAS:
-1. Pilih TEPAT 4 CPL-PRODI dari daftar yang benar-benar PALING SPESIFIK dan RELEVAN dengan keunikan mata kuliah ini. Anda DIBEBASKAN untuk memilih kombinasi kategori apapun (misalnya boleh hanya memilih Pengetahuan dan Keterampilan Khusus saja, atau kombinasi bebas lainnya) asalkan BENAR-BENAR SESUAI dengan mata kuliah yang diinput. JANGAN HANYA MEMILIH CPL YANG ITU-ITU SAJA SECARA DEFAULT.
-2. Buat 4-6 CPMK terkait CPL. Setiap rumusan CPMK wajib HANYA berisi KKO terukur + objek kemampuan + konteks/kriteria, TANPA diawali dengan kata "Mahasiswa mampu".
+1. Pilih TEPAT 4 CPL-PRODI dari daftar yang benar-benar PALING SPESIFIK dan RELEVAN dengan keunikan mata kuliah ini. Anda DIBEBASKAN untuk memilih kombinasi kategori apapun (misalnya boleh hanya memilih Pengetahuan dan Keterampilan Khusus saja, atau kombinasi bebas lainnya) asalkan BENAR-BENAR SESUAI dengan mata kuliah yang diinput. JANGAN HANYA MEMILIH CPL YANG ITU-ITU SAJA SECARA DEFAULT. PENTING: TOTAL CPL YANG DIPILIH WAJIB TEPAT BERJUMLAH 4.
+2. Buat 4-6 CPMK terkait CPL. Setiap rumusan CPMK wajib HANYA berisi kalimat "Mampu + KKO terukur + objek", TANPA menyertakan kata "Mahasiswa" di depannya. (Contoh: "Mampu menjelaskan konsep...")
 3. Gunakan KKO yang teramati dan terukur, hindari penggunaan kata yang ambigu jika memungkinkan. DILARANG KERAS menggunakan awalan kata kerja yang tidak dapat diukur secara langsung seperti "menguasai", "memahami", atau "mengetahui".
 4. Jika memilih CPL sikap (TRS), minimal satu CPMK/Sub-CPMK wajib memakai KKO afektif yang teramati (misalnya menunjukkan, mematuhi, mempertahankan, mengintegrasikan) dan indikatornya nanti dapat dinilai.
 5. Buat 5-12 Sub-CPMK unik terkait tepat satu CPMK. Semua rumusan Sub-CPMK WAJIB diawali dengan kalimat awalan baku "Mahasiswa mampu " diikuti KKO dan objek.
@@ -680,6 +680,18 @@ TUGAS:
         if (!data?.cpmk || data.cpmk.length === 0) return "CPMK harus diisi.";
         if (!data?.sub_cpmk || data.sub_cpmk.length === 0) return "Sub-CPMK harus diisi.";
         
+        if (data?.cpmk) {
+          const usedCpls = new Set();
+          data.cpmk.forEach((c: any) => (c.cpl_terkait || []).forEach((cpl: any) => usedCpls.add(cpl)));
+          if (usedCpls.size !== 4) {
+            return `PENTING: Anda WAJIB menggunakan TEPAT 4 CPL-PRODI yang berbeda. Saat ini Anda menggunakan ${usedCpls.size} CPL. Kurangi atau tambah pilihan CPL Anda hingga jumlahnya pas 4!`;
+          }
+        }
+        
+        if (!data?.pustaka?.pendukung || data.pustaka.pendukung.length === 0 || (data.pustaka.pendukung.length === 1 && data.pustaka.pendukung[0].trim() === '')) {
+          return "Pustaka Pendukung TIDAK BOLEH KOSONG. Harap berikan minimal 2 referensi tambahan!";
+        }
+
         const nonOperationalOpening = /^\s*(?:mahasiswa\s+mampu\s+)?(?:menguasai|memahami|mengetahui)\b/i;
         for (const outcome of [...(data.cpmk || []), ...(data.sub_cpmk || [])]) {
           if (nonOperationalOpening.test(outcome.teks || '')) {
@@ -687,8 +699,8 @@ TUGAS:
           }
         }
         for (const outcome of (data.cpmk || [])) {
-          if (/^\s*mahasiswa\s+mampu/i.test(outcome.teks || '')) {
-            return `${outcome.kode} JANGAN diawali dengan kata "Mahasiswa mampu", langsung saja ke KKO-nya.`;
+          if (/^\s*mahasiswa/i.test(outcome.teks || '')) {
+            return `${outcome.kode} JANGAN diawali dengan kata "Mahasiswa", langsung saja mulai dengan "Mampu ...".`;
           }
         }
         for (const outcome of (data.sub_cpmk || [])) {
@@ -798,7 +810,18 @@ Bentuk:
           }
         }
         
-        // Removed unique materi validation to allow "(Lanjutan)" for multi-week topics
+        const seenMateri = new Set();
+        for (const row of (data?.matriks_pembelajaran || [])) {
+          if (!isExamRow(row)) {
+            const materiText = String(row.materi || '').trim().toLowerCase();
+            if (materiText && seenMateri.has(materiText)) {
+              if (!materiText.includes("(lanjutan)")) {
+                return `Terdeteksi materi duplikat pada minggu ${row.minggu_ke}: "${row.materi}". Jika materi ini berlanjut dari pertemuan sebelumnya, WAJIB tambahkan kata "(Lanjutan)" pada akhirnya (contoh: "${row.materi} (Lanjutan)"). Jika tidak, buat materi yang berbeda!`;
+              }
+            }
+            seenMateri.add(materiText);
+          }
+        }
         return null;
       };
 
@@ -1881,7 +1904,7 @@ ATURAN:
                 <td className={`${td} font-bold bg-gray-50`}>Bahan Kajian / Materi Pembelajaran</td>
                 <td className={`${td} align-top`}>
                   <div className="space-y-1">
-                    {rpsData?.bahan_kajian?.map((item, idx) => <div key={idx} className="whitespace-pre-wrap text-left">{item}</div>)}
+                    {rpsData?.bahan_kajian?.map((item: string, idx: number) => <div key={idx} className="whitespace-pre-wrap text-left">{idx + 1}. {item.replace(/^\d+[\.\)]\s*/, '')}</div>)}
                   </div>
                 </td>
               </tr>
@@ -2067,7 +2090,7 @@ ATURAN:
               <tr>
                 <td className={`${td}`} colSpan={4}>
                   <div className="space-y-1">
-                    {rpsData?.bahan_kajian?.map((m, i) => <div key={i} className="whitespace-pre-wrap text-left ml-2">{m}</div>)}
+                    {rpsData?.bahan_kajian?.map((m: string, i: number) => <div key={i} className="whitespace-pre-wrap text-left ml-2">{i + 1}. {m.replace(/^\d+[\.\)]\s*/, '')}</div>)}
                   </div>
                 </td>
               </tr>
