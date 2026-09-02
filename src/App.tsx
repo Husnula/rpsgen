@@ -426,18 +426,6 @@ const assertRpsConsistency = (data) => {
     }
   });
 
-  // Check for duplicate materi in matriks to ensure progressive learning
-  const seenMateri = new Set();
-  (data.matriks_pembelajaran || []).forEach((row) => {
-    if (!isExamRow(row)) {
-      const materiText = String(row.materi || '').trim().toLowerCase();
-      if (materiText && seenMateri.has(materiText)) {
-        throw new Error(`Terdeteksi materi duplikat pada minggu ${row.minggu_ke}: "${row.materi}". AI harus memecah materi menjadi sub-topik yang berbeda setiap minggu.`);
-      }
-      seenMateri.add(materiText);
-    }
-  });
-
   const uniqueCpls = new Set();
   (data.cpmk || []).forEach(cpmk => {
     (cpmk.cpl_terkait || []).forEach(code => uniqueCpls.add(code));
@@ -670,7 +658,7 @@ ${cplList}
 TUGAS PENTING: Teks di atas adalah MASTER CPL. Anda WAJIB MENYARING OTOMATIS dan HANYA menulis CPL yang paling relevan dengan mata kuliah yang diketik.
 
 TUGAS:
-1. Pilih TEPAT 4 CPL-PRODI dari daftar yang benar-benar PALING SPESIFIK dan RELEVAN dengan materi mata kuliah ini. JANGAN HANYA MEMILIH CPL YANG SAMA (seperti TRS-2, TRP-4, TRKS-7, TRKU-12) secara default. Analisis 'Deskripsi' dan 'Bahan Materi Ajar' untuk memilih CPL (1 Sikap, 1 Pengetahuan, 1 Keterampilan Umum, 1 Keterampilan Khusus) yang paling tepat mewakili keunikan mata kuliah ini.
+1. Pilih TEPAT 4 CPL-PRODI dari daftar yang benar-benar PALING SPESIFIK dan RELEVAN dengan keunikan mata kuliah ini. JANGAN HANYA MEMILIH CPL YANG ITU-ITU SAJA SECARA DEFAULT. Analisis 'Deskripsi' dan 'Bahan Materi Ajar' dengan cermat untuk memilih CPL (1 Sikap, 1 Pengetahuan, 1 Keterampilan Umum, 1 Keterampilan Khusus).
 2. Buat 4-6 CPMK terkait CPL. Setiap rumusan wajib berbentuk "Mahasiswa mampu + SATU KKO terukur + objek kemampuan + konteks/kriteria".
 3. Gunakan KKO yang teramati dan terukur, hindari penggunaan kata yang ambigu jika memungkinkan. DILARANG KERAS menggunakan awalan kata kerja yang tidak dapat diukur secara langsung seperti "menguasai", "memahami", atau "mengetahui".
 4. Jika memilih CPL sikap (TRS), minimal satu CPMK/Sub-CPMK wajib memakai KKO afektif yang teramati (misalnya menunjukkan, mematuhi, mempertahankan, mengintegrasikan) dan indikatornya nanti dapat dinilai.
@@ -787,6 +775,17 @@ Bentuk:
         for (const t of tasks) {
           if (!/^Tugas-\d+$/.test(t.task_code)) {
             return `Format task_code '${t.task_code}' salah! task_code HANYA boleh berisi kode pendek seperti 'Tugas-1'. JANGAN memasukkan spasi atau judul tugas ke dalamnya.`;
+          }
+        }
+        
+        const seenMateri = new Set();
+        for (const row of (data?.matriks_pembelajaran || [])) {
+          if (!isExamRow(row)) {
+            const materiText = String(row.materi || '').trim().toLowerCase();
+            if (materiText && seenMateri.has(materiText)) {
+              return `Terdeteksi materi duplikat pada minggu ${row.minggu_ke}: "${row.materi}". AI harus memecah materi menjadi sub-topik yang berbeda dan unik setiap minggu.`;
+            }
+            seenMateri.add(materiText);
           }
         }
         return null;
