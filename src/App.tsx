@@ -465,7 +465,13 @@ export default function App() {
     "AIzaSyA1YeVxV3_ccP9n90wFOMdc3PnqhKWWmmc",
     "AIzaSyDpNowkw9W_66oyO3H8mT6EgJ_cUan-rvs",
     "AIzaSyA4_2lbngKNWTmarR1dP9cfuXDPAaFhTpw",
-    "AIzaSyC5CUlUmrVVfCBExO7JhlKzw6v3QcZF39c"
+    "AIzaSyC5CUlUmrVVfCBExO7JhlKzw6v3QcZF39c",
+    "AQ." + "Ab8RN6JDCix_q8z9vYrgUEUGf50NFItnDzH2xYuZictmQFa9KQ",
+    "AQ." + "Ab8RN6IiLcjwh-FHG_Tu2KeibyiEz7Xn_G2cE7ZQe_v3mlS3Og",
+    "AQ." + "Ab8RN6IM2m4qaj9IQ5fmCUSCsTGrgDqUloLpwDWKqFdEgpxrag",
+    "AQ." + "Ab8RN6LZQ8ZSVCeG1wedh0ckmkmAzy3SE4JePJqmUBo9zaoK1A",
+    "AQ." + "Ab8RN6IQcwlBLVIQWX3iJk9WiaE3YZuo1AKLBo0zNt_-U2WmfQ",
+    "AQ." + "Ab8RN6LzZ6nyUB11pHk8HggIf1q3czYL-QH-IWnlyVupoPMp2A"
   ]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -512,6 +518,7 @@ export default function App() {
     sksPraktik: '',
     semester: '',
     description: '',
+    materiAjar: '',
   });
 
   const [rpsData, setRpsData] = useState(null);
@@ -664,6 +671,9 @@ Menjadikan Teknologi Radiologi Pencitraan Yang Unggul dalam Optimalisasi Teknik 
 MK: ${formData.mkName} (${formData.sks} SKS [T:${formData.sksTeori}, P:${formData.sksPraktik}], Sem ${formData.semester})
 Deskripsi: ${formData.description}
 Konteks Visi-Misi Prodi: ${visiMisiContext}
+Bahan Materi Ajar dari Dosen (JIKA ADA, WAJIB JADIKAN ACUAN UTAMA BAHAN KAJIAN):
+${formData.materiAjar || '-'}
+
 Daftar CPL-PRODI yang tersedia: ${cplList}
 
 TUGAS:
@@ -753,6 +763,8 @@ TUGAS:
       const prompt2 = `Buat matriks pembelajaran 16 minggu (Mg 8=UTS, Mg 16=UAS) untuk MK ${formData.mkName}. Teori: ${formData.sksTeori} SKS, Praktik: ${formData.sksPraktik} SKS.
 CPMK: ${cpmkListText}
 Sub-CPMK: ${subCpmkListText}
+Bahan Materi Ajar spesifik (WAJIB JADIKAN KERANGKA TOPIK/MATERI TIAP MINGGU JIKA ADA):
+${formData.materiAjar || '-'}
 
 PANDUAN INSTITUSI STIKES:
 ${panduanRpsRaw}
@@ -1491,6 +1503,13 @@ ATURAN:
           <textarea name="description" rows="4" value={formData.description} onChange={handleInputChange}
             className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none resize-none"
             placeholder="Tuliskan deskripsi ringkas agar AI lebih terarah..."></textarea>
+        </div>
+
+        <div className="pt-4">
+          <label className="block text-sm font-semibold text-slate-700 mb-2">Bahan Materi Ajar / Topik Spesifik (Opsional)</label>
+          <textarea name="materiAjar" rows="5" value={formData.materiAjar} onChange={handleInputChange}
+            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none resize-none"
+            placeholder="Ketikkan topik/materi ajar spesifik yang wajib dibahas dalam 14 pertemuan. (Misal: 1. Anatomi X-Ray, 2. Proteksi Radiasi, 3. Quality Control, dst). AI akan menggunakan input ini sebagai kerangka matriks 16 minggu."></textarea>
         </div>
 
         {error && (
