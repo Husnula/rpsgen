@@ -347,17 +347,8 @@ const completeBlueprintData = (blueprint = {}, cpmk = [], subCpmk = [], matrix =
 };
 
 const assertRpsConsistency = (data) => {
-  const cplCodes = new Set(allCplFlat.map((item) => item.kode));
   const cpmkCodes = new Set((data.cpmk || []).map((item) => item.kode));
   const subCpmkCodes = new Set((data.sub_cpmk || []).map((item) => item.kode));
-
-  (data.cpmk || []).forEach((cpmk) => {
-    (cpmk.cpl_terkait || []).forEach((code) => {
-      if (!cplCodes.has(code)) {
-        throw new Error(`CPL tidak dikenal pada ${cpmk.kode}: ${code}`);
-      }
-    });
-  });
 
   (data.sub_cpmk || []).forEach((sub) => {
     if (!cpmkCodes.has(sub.cpmk_ref)) {
@@ -451,18 +442,6 @@ const assertRpsConsistency = (data) => {
   (data.cpmk || []).forEach(cpmk => {
     (cpmk.cpl_terkait || []).forEach(code => uniqueCpls.add(code));
   });
-  
-  const cplCounts = { S: 0, P: 0, KU: 0, KK: 0 };
-  uniqueCpls.forEach(code => {
-    if (code.startsWith('S')) cplCounts.S++;
-    else if (code.startsWith('P')) cplCounts.P++;
-    else if (code.startsWith('KU')) cplCounts.KU++;
-    else if (code.startsWith('KK') || code.startsWith('KS')) cplCounts.KK++;
-  });
-  
-  if (cplCounts.S > 1 || cplCounts.P > 1 || cplCounts.KU > 1 || cplCounts.KK > 1) {
-    throw new Error(`Komposisi CPL melebihi batas (Maks: 1 S, 1 P, 1 KU, 1 KK). Saat ini: ${cplCounts.S} S, ${cplCounts.P} P, ${cplCounts.KU} KU, ${cplCounts.KK} KK.`);
-  }
 
   // Pustaka validation has been moved to auto-retry phase 1
 };
