@@ -435,10 +435,17 @@ const assertRpsConsistency = (data) => {
     }
   });
 
-  const totalTasks = (data.rencana_tugas || []).length;
-  if (totalTasks > 0 && (totalTasks < 7 || totalTasks > 9)) {
-    throw new Error(`Jumlah Rencana Tugas Mahasiswa (RTM) harus antara 7 hingga 9, tetapi AI menghasilkan ${totalTasks} tugas.`);
-  }
+  // Check for duplicate materi in matriks to ensure progressive learning
+  const seenMateri = new Set();
+  (data.matriks_pembelajaran || []).forEach((row) => {
+    if (!isExamRow(row)) {
+      const materiText = String(row.materi || '').trim().toLowerCase();
+      if (materiText && seenMateri.has(materiText)) {
+        throw new Error(`Terdeteksi materi duplikat pada minggu ${row.minggu_ke}: "${row.materi}". AI harus memecah materi menjadi sub-topik yang berbeda setiap minggu.`);
+      }
+      seenMateri.add(materiText);
+    }
+  });
 
   const uniqueCpls = new Set();
   (data.cpmk || []).forEach(cpmk => {
@@ -519,6 +526,10 @@ export default function App() {
     semester: '',
     description: '',
     materiAjar: '',
+    masterCplS: cplBank.TRS.map(c => `${c.kode} ${c.teks}`).join('\n\n'),
+    masterCplP: cplBank.TRP.map(c => `${c.kode} ${c.teks}`).join('\n\n'),
+    masterCplKU: cplBank.TRKU.map(c => `${c.kode} ${c.teks}`).join('\n\n'),
+    masterCplKK: cplBank.TRKS.map(c => `${c.kode} ${c.teks}`).join('\n\n'),
   });
 
   const [rpsData, setRpsData] = useState(null);
@@ -619,7 +630,7 @@ Berikan HANYA teks deskripsinya saja dalam 1-2 paragraf, gaya bahasa formal akad
     setLoadingStage(1);
     setError(null);
 
-    const cplList = allCplFlat.map((c) => `${c.kode}: ${c.teks}`).join('\n');
+    const cplList = `Sikap (S):\n${formData.masterCplS}\n\nPengetahuan (P):\n${formData.masterCplP}\n\nKeterampilan Umum (KU):\n${formData.masterCplKU}\n\nKeterampilan Khusus (KK):\n${formData.masterCplKK}`;
     const visiMisiContext = `
 VISI PRODI TEKNOLOGI RADIOLOGI PENCITRAAN:
 Menjadikan Teknologi Radiologi Pencitraan Yang Unggul dalam Optimalisasi Teknik Radiologi Imejing Diagnostic Berfokus Pada Quality Control Dan Keselamatan Pasien (Patient Safety) Dipelayanan Kesehatan Serta Berjiwa Entrepreneur Tahun 2030
@@ -674,7 +685,10 @@ Konteks Visi-Misi Prodi: ${visiMisiContext}
 Bahan Materi Ajar dari Dosen (JIKA ADA, WAJIB JADIKAN ACUAN UTAMA BAHAN KAJIAN):
 ${formData.materiAjar || '-'}
 
-Daftar CPL-PRODI yang tersedia: ${cplList}
+Daftar CPL-PRODI yang tersedia:
+${cplList}
+
+TUGAS PENTING: Teks di atas adalah MASTER CPL. Anda WAJIB MENYARING OTOMATIS dan HANYA menulis CPL yang paling relevan dengan mata kuliah yang diketik.
 
 TUGAS:
 1. Pilih TEPAT 4 CPL-PRODI dari daftar yang benar-benar PALING SPESIFIK dan RELEVAN dengan materi mata kuliah ini. JANGAN HANYA MEMILIH CPL YANG SAMA (seperti TRS-2, TRP-4, TRKS-7, TRKU-12) secara default. Analisis 'Deskripsi' dan 'Bahan Materi Ajar' untuk memilih CPL (1 Sikap, 1 Pengetahuan, 1 Keterampilan Umum, 1 Keterampilan Khusus) yang paling tepat mewakili keunikan mata kuliah ini.
@@ -785,15 +799,12 @@ Bentuk:
 (isi bentuk, misal non-test, Resume)
 8. Total bobot nilai = 100%. Pastikan merujuk pada "Rumus Evaluasi & Bobot Nilai Akhir" di panduan untuk menentukan bobot harian (non-ujian).
 9. PENTING: Anda WAJIB mengisi objek 'metode_luring' (dengan field 'bentuk', 'metode', 'penugasan', 'alokasi') dan 'metode_daring' (dengan field 'bentuk', 'metode', 'penugasan') untuk setiap pertemuan minggu (selain ujian).
-10. JIKA baris tersebut memiliki penugasan, field 'penugasan' WAJIB diisi dengan format "Tugas-[Nomor] — [Judul Tugas]" (contoh: "Tugas-1 — Resume Etika Profesi Radiologi"). Nomor tugas harus berurutan. PENTING: Anda WAJIB membuat antara 7 hingga 9 penugasan (RTM) sepanjang semester ini, tidak boleh kurang dan tidak boleh lebih.
+10. JIKA baris tersebut memiliki penugasan, field 'penugasan' WAJIB diisi dengan format "Tugas-[Nomor] — [Judul Tugas]" (contoh: "Tugas-1 — Resume Etika Profesi Radiologi"). Nomor tugas harus berurutan.
 11. PENTING: Untuk field 'task_code' (jika task_required=true), WAJIB diisi HANYA dengan KODE PENDEK (contoh: "Tugas-1", "Tugas-2"). JANGAN pernah memasukkan judul tugas ke dalam field 'task_code'.
 12. PENTING: JANGAN mengulang materi, indikator, atau kegiatan yang sama persis di minggu yang berbeda. Distribusikan "Bahan Materi Ajar" secara merata ke 14 pertemuan tatap muka (selain UTS/UAS). **Jika poin Bahan Materi Ajar yang diinputkan kurang dari 14, pecah dan kembangkan materi tersebut menjadi sub-topik atau tahapan belajar lanjutan (contoh: Teori Dasar di minggu 1, Lanjutan/Aplikasi di minggu 2)** sehingga SETIAP MINGGU memiliki materi dan kegiatan yang UNIK dan BERBEDA.`;
 
       const validateData2 = (data: any) => {
         const tasks = (data?.matriks_pembelajaran || []).filter((row: any) => row.task_required && row.task_code);
-        if (tasks.length < 7 || tasks.length > 9) {
-          return `Jumlah Rencana Tugas (task_required=true) harus antara 7 hingga 9. Saat ini AI menghasilkan ${tasks.length} tugas.`;
-        }
         for (const t of tasks) {
           if (!/^Tugas-\d+$/.test(t.task_code)) {
             return `Format task_code '${t.task_code}' salah! task_code HANYA boleh berisi kode pendek seperti 'Tugas-1'. JANGAN memasukkan spasi atau judul tugas ke dalamnya.`;
@@ -1511,6 +1522,41 @@ ATURAN:
           <textarea name="materiAjar" rows="5" value={formData.materiAjar} onChange={handleInputChange}
             className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none resize-none"
             placeholder="Ketikkan topik/materi ajar spesifik yang wajib dibahas dalam 14 pertemuan. (Misal: 1. Anatomi X-Ray, 2. Proteksi Radiasi, 3. Quality Control, dst). AI akan menggunakan input ini sebagai kerangka matriks 16 minggu."></textarea>
+        </div>
+
+        <div className="pt-6 border-t mt-6">
+          <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2 mb-2">
+            <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+            Daftar Master CPL-PRODI
+          </h3>
+          <p className="text-xs text-orange-600 font-medium italic mb-4">
+            *Teks di bawah adalah MASTER CPL. AI akan MENYARING OTOMATIS di hasil dokumen dan HANYA menulis CPL yang relevan dengan mata kuliah yang diketik.
+          </p>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Sikap (S)</label>
+              <textarea name="masterCplS" rows="3" value={formData.masterCplS} onChange={handleInputChange}
+                className="w-full px-3 py-2 bg-[#fffae6] border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none resize-y text-sm text-slate-800"></textarea>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Pengetahuan (P)</label>
+              <textarea name="masterCplP" rows="3" value={formData.masterCplP} onChange={handleInputChange}
+                className="w-full px-3 py-2 bg-[#f0f7ff] border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none resize-y text-sm text-slate-800"></textarea>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Keterampilan Umum (KU)</label>
+              <textarea name="masterCplKU" rows="3" value={formData.masterCplKU} onChange={handleInputChange}
+                className="w-full px-3 py-2 bg-[#fdf4ff] border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none resize-y text-sm text-slate-800"></textarea>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Keterampilan Khusus (KK)</label>
+              <textarea name="masterCplKK" rows="3" value={formData.masterCplKK} onChange={handleInputChange}
+                className="w-full px-3 py-2 bg-[#fff1f2] border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none resize-y text-sm text-slate-800"></textarea>
+            </div>
+          </div>
         </div>
 
         {error && (
