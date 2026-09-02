@@ -185,13 +185,23 @@ const normalizeLearningOutcomeCodes = (data = {}) => {
   const normalizedCpmk = (data.cpmk || []).map((item, index) => {
     const kode = item.kode || `CPMK-${index + 1}`;
     cpmkCodeMap.set(item.kode, kode);
-    return { ...item, kode };
+    const teks = item.teks ? item.teks.replace(/^(?:Mahasiswa\s+mampu\s+)+/i, '').trim() : '';
+    const capitalizedTeks = teks ? teks.charAt(0).toUpperCase() + teks.slice(1) : '';
+    return { ...item, kode, teks: capitalizedTeks };
   });
-  const normalizedSubCpmk = (data.sub_cpmk || []).map((item, index) => ({
-    ...item,
-    kode: item.kode || `Sub-CPMK-${index + 1}`,
-    cpmk_ref: cpmkCodeMap.get(item.cpmk_ref) || item.cpmk_ref,
-  }));
+  const normalizedSubCpmk = (data.sub_cpmk || []).map((item, index) => {
+    let teks = item.teks ? item.teks.trim() : '';
+    if (teks && !/^mahasiswa\s+mampu/i.test(teks)) {
+      teks = `Mahasiswa mampu ${teks.charAt(0).toLowerCase() + teks.slice(1)}`;
+    }
+    const capitalizedTeks = teks ? teks.charAt(0).toUpperCase() + teks.slice(1) : '';
+    return {
+      ...item,
+      teks: capitalizedTeks,
+      kode: item.kode || `Sub-CPMK-${index + 1}`,
+      cpmk_ref: cpmkCodeMap.get(item.cpmk_ref) || item.cpmk_ref,
+    };
+  });
   return { ...data, cpmk: normalizedCpmk, sub_cpmk: normalizedSubCpmk };
 };
 
@@ -658,13 +668,13 @@ ${cplList}
 TUGAS PENTING: Teks di atas adalah MASTER CPL. Anda WAJIB MENYARING OTOMATIS dan HANYA menulis CPL yang paling relevan dengan mata kuliah yang diketik.
 
 TUGAS:
-1. Pilih antara 3 hingga 5 CPL-PRODI dari daftar yang benar-benar PALING SPESIFIK dan RELEVAN dengan keunikan mata kuliah ini. Anda DIBEBASKAN untuk memilih kombinasi kategori apapun (misalnya boleh hanya memilih Pengetahuan dan Keterampilan Khusus saja, atau kombinasi bebas lainnya) asalkan BENAR-BENAR SESUAI dengan mata kuliah yang diinput. JANGAN HANYA MEMILIH CPL YANG ITU-ITU SAJA SECARA DEFAULT.
-2. Buat 4-6 CPMK terkait CPL. Setiap rumusan wajib berbentuk "Mahasiswa mampu + SATU KKO terukur + objek kemampuan + konteks/kriteria".
+1. Pilih TEPAT 4 CPL-PRODI dari daftar yang benar-benar PALING SPESIFIK dan RELEVAN dengan keunikan mata kuliah ini. Anda DIBEBASKAN untuk memilih kombinasi kategori apapun (misalnya boleh hanya memilih Pengetahuan dan Keterampilan Khusus saja, atau kombinasi bebas lainnya) asalkan BENAR-BENAR SESUAI dengan mata kuliah yang diinput. JANGAN HANYA MEMILIH CPL YANG ITU-ITU SAJA SECARA DEFAULT.
+2. Buat 4-6 CPMK terkait CPL. Setiap rumusan CPMK wajib HANYA berisi KKO terukur + objek kemampuan + konteks/kriteria, TANPA diawali dengan kata "Mahasiswa mampu".
 3. Gunakan KKO yang teramati dan terukur, hindari penggunaan kata yang ambigu jika memungkinkan. DILARANG KERAS menggunakan awalan kata kerja yang tidak dapat diukur secara langsung seperti "menguasai", "memahami", atau "mengetahui".
 4. Jika memilih CPL sikap (TRS), minimal satu CPMK/Sub-CPMK wajib memakai KKO afektif yang teramati (misalnya menunjukkan, mematuhi, mempertahankan, mengintegrasikan) dan indikatornya nanti dapat dinilai.
-5. Buat 5-12 Sub-CPMK unik terkait tepat satu CPMK. Semua teks harus diawali "Mahasiswa mampu ".
-6. Bahan kajian harus spesifik untuk setiap Sub-CPMK, bukan daftar umum.
-7. Pustaka minimal 5 sumber mutakhir dan relevan. Prioritaskan buku standar, pedoman profesi/regulator, atau artikel ilmiah yang benar-benar dapat diidentifikasi; jangan mengarang DOI atau buku fiktif.`;
+5. Buat 5-12 Sub-CPMK unik terkait tepat satu CPMK. Semua rumusan Sub-CPMK WAJIB diawali dengan kalimat awalan baku "Mahasiswa mampu " diikuti KKO dan objek.
+6. Bahan kajian harus spesifik untuk setiap Sub-CPMK. WAJIB diberi nomor urut 1, 2, 3, dst untuk setiap poin materinya.
+7. Pustaka: WAJIB memisahkan Pustaka Utama (minimal 3 buku/referensi utama) dan Pustaka Pendukung (minimal 2 artikel/jurnal/buku tambahan). Jangan sampai Pustaka Pendukung kosong atau tidak diisi.`;
       
       const validateData1 = (data: any) => {
         if (!data?.cpmk || data.cpmk.length === 0) return "CPMK harus diisi.";
@@ -674,6 +684,16 @@ TUGAS:
         for (const outcome of [...(data.cpmk || []), ...(data.sub_cpmk || [])]) {
           if (nonOperationalOpening.test(outcome.teks || '')) {
             return `${outcome.kode} harus diawali KKO yang dapat diamati/diukur, bukan "menguasai/memahami/mengetahui".`;
+          }
+        }
+        for (const outcome of (data.cpmk || [])) {
+          if (/^\s*mahasiswa\s+mampu/i.test(outcome.teks || '')) {
+            return `${outcome.kode} JANGAN diawali dengan kata "Mahasiswa mampu", langsung saja ke KKO-nya.`;
+          }
+        }
+        for (const outcome of (data.sub_cpmk || [])) {
+          if (!/^\s*mahasiswa\s+mampu/i.test(outcome.teks || '')) {
+            return `${outcome.kode} WAJIB diawali dengan kata "Mahasiswa mampu".`;
           }
         }
         return null;
@@ -768,7 +788,7 @@ Bentuk:
 9. PENTING: Anda WAJIB mengisi objek 'metode_luring' (dengan field 'bentuk', 'metode', 'penugasan', 'alokasi') dan 'metode_daring' (dengan field 'bentuk', 'metode', 'penugasan') untuk setiap pertemuan minggu (selain ujian).
 10. JIKA baris tersebut memiliki penugasan, field 'penugasan' WAJIB diisi dengan format "Tugas-[Nomor] — [Judul Tugas]" (contoh: "Tugas-1 — Resume Etika Profesi Radiologi"). Nomor tugas harus berurutan.
 11. PENTING: Untuk field 'task_code' (jika task_required=true), WAJIB diisi HANYA dengan KODE PENDEK (contoh: "Tugas-1", "Tugas-2"). JANGAN pernah memasukkan judul tugas ke dalam field 'task_code'.
-12. PENTING: JANGAN mengulang materi, indikator, atau kegiatan yang sama persis di minggu yang berbeda. Distribusikan "Bahan Materi Ajar" secara merata ke 14 pertemuan tatap muka (selain UTS/UAS). **Jika poin Bahan Materi Ajar yang diinputkan kurang dari 14, pecah dan kembangkan materi tersebut menjadi sub-topik atau tahapan belajar lanjutan (contoh: Teori Dasar di minggu 1, Lanjutan/Aplikasi di minggu 2)** sehingga SETIAP MINGGU memiliki materi dan kegiatan yang UNIK dan BERBEDA.`;
+12. PENTING: Jika suatu Sub-CPMK atau Materi Ajar membutuhkan lebih dari 1 pertemuan (misal pertemuan 5 dan 6), Anda BOLEH menggunakan Sub-CPMK dan Materi yang sama, TETAPI WAJIB menambahkan keterangan "(Lanjutan)" pada akhir teks materi di pertemuan berikutnya (contoh: "1. Anatomi Tulang (Lanjutan)"). Distribusikan "Bahan Materi Ajar" secara merata ke 14 pertemuan tatap muka.`;
 
       const validateData2 = (data: any) => {
         const tasks = (data?.matriks_pembelajaran || []).filter((row: any) => row.task_required && row.task_code);
@@ -778,16 +798,7 @@ Bentuk:
           }
         }
         
-        const seenMateri = new Set();
-        for (const row of (data?.matriks_pembelajaran || [])) {
-          if (!isExamRow(row)) {
-            const materiText = String(row.materi || '').trim().toLowerCase();
-            if (materiText && seenMateri.has(materiText)) {
-              return `Terdeteksi materi duplikat pada minggu ${row.minggu_ke}: "${row.materi}". AI harus memecah materi menjadi sub-topik yang berbeda dan unik setiap minggu.`;
-            }
-            seenMateri.add(materiText);
-          }
-        }
+        // Removed unique materi validation to allow "(Lanjutan)" for multi-week topics
         return null;
       };
 
