@@ -787,7 +787,7 @@ Bentuk:
 9. PENTING: Anda WAJIB mengisi objek 'metode_luring' (dengan field 'bentuk', 'metode', 'penugasan', 'alokasi') dan 'metode_daring' (dengan field 'bentuk', 'metode', 'penugasan') untuk setiap pertemuan minggu (selain ujian).
 10. JIKA baris tersebut memiliki penugasan, field 'penugasan' WAJIB diisi dengan format "Tugas-[Nomor] — [Judul Tugas]" (contoh: "Tugas-1 — Resume Etika Profesi Radiologi"). Nomor tugas harus berurutan. PENTING: Anda WAJIB membuat antara 7 hingga 9 penugasan (RTM) sepanjang semester ini, tidak boleh kurang dan tidak boleh lebih.
 11. PENTING: Untuk field 'task_code' (jika task_required=true), WAJIB diisi HANYA dengan KODE PENDEK (contoh: "Tugas-1", "Tugas-2"). JANGAN pernah memasukkan judul tugas ke dalam field 'task_code'.
-12. PENTING: JANGAN mengulang materi, indikator, atau kegiatan yang sama persis di minggu yang berbeda. Distribusikan "Bahan Materi Ajar" secara merata ke 14 pertemuan tatap muka (selain UTS/UAS) sehingga SETIAP MINGGU memiliki materi dan kegiatan yang UNIK dan BERBEDA.`;
+12. PENTING: JANGAN mengulang materi, indikator, atau kegiatan yang sama persis di minggu yang berbeda. Distribusikan "Bahan Materi Ajar" secara merata ke 14 pertemuan tatap muka (selain UTS/UAS). **Jika poin Bahan Materi Ajar yang diinputkan kurang dari 14, pecah dan kembangkan materi tersebut menjadi sub-topik atau tahapan belajar lanjutan (contoh: Teori Dasar di minggu 1, Lanjutan/Aplikasi di minggu 2)** sehingga SETIAP MINGGU memiliki materi dan kegiatan yang UNIK dan BERBEDA.`;
 
       const validateData2 = (data: any) => {
         const tasks = (data?.matriks_pembelajaran || []).filter((row: any) => row.task_required && row.task_code);
