@@ -677,7 +677,7 @@ ${formData.materiAjar || '-'}
 Daftar CPL-PRODI yang tersedia: ${cplList}
 
 TUGAS:
-1. Pilih TEPAT 4 CPL-PRODI yang paling relevan dengan mata kuliah ini dengan ketentuan: 1 poin Sikap (S), 1 poin Pengetahuan (P), 1 poin Keterampilan Umum (KU), dan 1 poin Keterampilan Khusus (KK).
+1. Pilih TEPAT 4 CPL-PRODI dari daftar yang benar-benar PALING SPESIFIK dan RELEVAN dengan materi mata kuliah ini. JANGAN HANYA MEMILIH CPL YANG SAMA (seperti TRS-2, TRP-4, TRKS-7, TRKU-12) secara default. Analisis 'Deskripsi' dan 'Bahan Materi Ajar' untuk memilih CPL (1 Sikap, 1 Pengetahuan, 1 Keterampilan Umum, 1 Keterampilan Khusus) yang paling tepat mewakili keunikan mata kuliah ini.
 2. Buat 4-6 CPMK terkait CPL. Setiap rumusan wajib berbentuk "Mahasiswa mampu + SATU KKO terukur + objek kemampuan + konteks/kriteria".
 3. Gunakan KKO yang teramati dan terukur, hindari penggunaan kata yang ambigu jika memungkinkan. DILARANG KERAS menggunakan awalan kata kerja yang tidak dapat diukur secara langsung seperti "menguasai", "memahami", atau "mengetahui".
 4. Jika memilih CPL sikap (TRS), minimal satu CPMK/Sub-CPMK wajib memakai KKO afektif yang teramati (misalnya menunjukkan, mematuhi, mempertahankan, mengintegrasikan) dan indikatornya nanti dapat dinilai.
@@ -786,7 +786,8 @@ Bentuk:
 8. Total bobot nilai = 100%. Pastikan merujuk pada "Rumus Evaluasi & Bobot Nilai Akhir" di panduan untuk menentukan bobot harian (non-ujian).
 9. PENTING: Anda WAJIB mengisi objek 'metode_luring' (dengan field 'bentuk', 'metode', 'penugasan', 'alokasi') dan 'metode_daring' (dengan field 'bentuk', 'metode', 'penugasan') untuk setiap pertemuan minggu (selain ujian).
 10. JIKA baris tersebut memiliki penugasan, field 'penugasan' WAJIB diisi dengan format "Tugas-[Nomor] — [Judul Tugas]" (contoh: "Tugas-1 — Resume Etika Profesi Radiologi"). Nomor tugas harus berurutan. PENTING: Anda WAJIB membuat antara 7 hingga 9 penugasan (RTM) sepanjang semester ini, tidak boleh kurang dan tidak boleh lebih.
-11. PENTING: Untuk field 'task_code' (jika task_required=true), WAJIB diisi HANYA dengan KODE PENDEK (contoh: "Tugas-1", "Tugas-2"). JANGAN pernah memasukkan judul tugas ke dalam field 'task_code'.`;
+11. PENTING: Untuk field 'task_code' (jika task_required=true), WAJIB diisi HANYA dengan KODE PENDEK (contoh: "Tugas-1", "Tugas-2"). JANGAN pernah memasukkan judul tugas ke dalam field 'task_code'.
+12. PENTING: JANGAN mengulang materi, indikator, atau kegiatan yang sama persis di minggu yang berbeda. Distribusikan "Bahan Materi Ajar" secara merata ke 14 pertemuan tatap muka (selain UTS/UAS) sehingga SETIAP MINGGU memiliki materi dan kegiatan yang UNIK dan BERBEDA.`;
 
       const validateData2 = (data: any) => {
         const tasks = (data?.matriks_pembelajaran || []).filter((row: any) => row.task_required && row.task_code);
