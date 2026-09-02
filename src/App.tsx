@@ -658,7 +658,7 @@ ${cplList}
 TUGAS PENTING: Teks di atas adalah MASTER CPL. Anda WAJIB MENYARING OTOMATIS dan HANYA menulis CPL yang paling relevan dengan mata kuliah yang diketik.
 
 TUGAS:
-1. Pilih TEPAT 4 CPL-PRODI dari daftar yang benar-benar PALING SPESIFIK dan RELEVAN dengan keunikan mata kuliah ini. JANGAN HANYA MEMILIH CPL YANG ITU-ITU SAJA SECARA DEFAULT. Analisis 'Deskripsi' dan 'Bahan Materi Ajar' dengan cermat untuk memilih CPL (1 Sikap, 1 Pengetahuan, 1 Keterampilan Umum, 1 Keterampilan Khusus).
+1. Pilih antara 3 hingga 5 CPL-PRODI dari daftar yang benar-benar PALING SPESIFIK dan RELEVAN dengan keunikan mata kuliah ini. Anda DIBEBASKAN untuk memilih kombinasi kategori apapun (misalnya boleh hanya memilih Pengetahuan dan Keterampilan Khusus saja, atau kombinasi bebas lainnya) asalkan BENAR-BENAR SESUAI dengan mata kuliah yang diinput. JANGAN HANYA MEMILIH CPL YANG ITU-ITU SAJA SECARA DEFAULT.
 2. Buat 4-6 CPMK terkait CPL. Setiap rumusan wajib berbentuk "Mahasiswa mampu + SATU KKO terukur + objek kemampuan + konteks/kriteria".
 3. Gunakan KKO yang teramati dan terukur, hindari penggunaan kata yang ambigu jika memungkinkan. DILARANG KERAS menggunakan awalan kata kerja yang tidak dapat diukur secara langsung seperti "menguasai", "memahami", atau "mengetahui".
 4. Jika memilih CPL sikap (TRS), minimal satu CPMK/Sub-CPMK wajib memakai KKO afektif yang teramati (misalnya menunjukkan, mematuhi, mempertahankan, mengintegrasikan) dan indikatornya nanti dapat dinilai.
