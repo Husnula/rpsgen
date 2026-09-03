@@ -1315,6 +1315,16 @@ ATURAN:
         table.style.width = '100%';
         table.style.borderCollapse = 'collapse';
         table.style.tableLayout = 'fixed';
+        
+        // Sisipkan paragraf pemisah berukuran 1pt setelah tabel 
+        // untuk mencegah Word menggabungkan tabel yang berurutan (gandeng)
+        const separator = document.createElement('p');
+        separator.style.margin = '0';
+        separator.style.padding = '0';
+        separator.style.fontSize = '1pt';
+        separator.style.lineHeight = '1pt';
+        separator.innerHTML = '&nbsp;';
+        table.parentNode?.insertBefore(separator, table.nextSibling);
       });
       clone.querySelectorAll('th, td').forEach((cell: HTMLElement) => {
         // Pertahankan width dari class Tailwind
