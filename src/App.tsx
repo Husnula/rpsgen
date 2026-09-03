@@ -1261,97 +1261,88 @@ ATURAN:
     setExportingKey(key);
     setError(null);
     try {
-      const htmlDocx = await loadExternalScript(
-        'https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js',
-        'htmlDocx'
-      );
-      const clone = element.cloneNode(true);
-      copyComputedStyles(element, clone);
-      clone.removeAttribute('id');
-      clone.classList.remove('hidden');
-      Object.assign(clone.style, {
-        display: 'block',
-        width: '100%',
-        maxWidth: '100%',
-        minHeight: '0',
-        margin: '0',
-        padding: '0',
-        border: '0',
-        boxShadow: 'none',
-        boxSizing: 'border-box',
-      });
-      Array.from(clone.children).forEach((page) => {
-        page.style.width = '100%';
-        page.style.maxWidth = '100%';
-        page.style.marginLeft = '0';
-        page.style.marginRight = '0';
-        page.style.boxSizing = 'border-box';
-      });
-      clone.querySelectorAll('table').forEach((table) => {
-        table.style.width = '100%';
-        table.style.maxWidth = '100%';
-        table.style.tableLayout = 'fixed';
-      });
-      clone.querySelectorAll('th, td').forEach((cell) => {
-        let width = 'auto';
-        const wMatch = (cell.getAttribute('class') || '').match(/w-\[(\d+(?:\.\d+)?)%\]/);
-        if (wMatch) {
-          width = `${wMatch[1]}%`;
-        }
-        cell.style.setProperty('width', width, 'important');
-        cell.style.maxWidth = 'none';
-        cell.style.whiteSpace = 'normal';
-        cell.style.wordBreak = 'break-word';
-      });
-      clone.querySelectorAll('.page-break').forEach((page) => {
-        page.style.pageBreakBefore = 'always';
-      });
-      clone.querySelectorAll('thead').forEach((head) => {
-        head.style.display = 'table-header-group';
-      });
-      clone.querySelectorAll('tr, .break-inside-avoid, .signature-block').forEach((node) => {
-        node.style.pageBreakInside = 'avoid';
-      });
-      // Sanitize oklch/oklab colors (Tailwind v4) yang tidak dipahami Word
-      const allElements = [clone, ...clone.querySelectorAll('*')];
-      const colorProps = ['color', 'backgroundColor', 'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'];
-      allElements.forEach((el: any) => {
+      // Clone DOM, sanitasi untuk Word export
+      const clone = element.cloneNode(true) as HTMLElement;
+
+      // Hapus elemen yang tidak relevan di dokumen Word
+      clone.querySelectorAll('svg, button, [data-no-export]').forEach((el) => el.remove());
+
+      // Konversi Tailwind classes ke inline style agar Word bisa membaca
+      clone.querySelectorAll('*').forEach((el: HTMLElement) => {
+        const cls = el.className || '';
+        // Background colors
+        if (/bg-gray-50/.test(cls)) el.style.backgroundColor = '#f9fafb';
+        else if (/bg-gray-100/.test(cls)) el.style.backgroundColor = '#f3f4f6';
+        else if (/bg-gray-200/.test(cls)) el.style.backgroundColor = '#e5e7eb';
+        // Font weight
+        if (/font-bold/.test(cls)) el.style.fontWeight = 'bold';
+        if (/font-semibold/.test(cls)) el.style.fontWeight = '600';
+        // Text align
+        if (/text-center/.test(cls)) el.style.textAlign = 'center';
+        if (/text-justify/.test(cls)) el.style.textAlign = 'justify';
+        if (/text-right/.test(cls)) el.style.textAlign = 'right';
+        // Text decoration
+        if (/underline/.test(cls)) el.style.textDecoration = 'underline';
+        if (/italic/.test(cls)) el.style.fontStyle = 'italic';
+        // Padding
+        if (/p-1/.test(cls)) el.style.padding = '4px';
+        if (/p-2/.test(cls)) el.style.padding = '8px';
+        if (/p-3/.test(cls)) el.style.padding = '12px';
+        // Page break
+        if (/page-break/.test(cls)) el.style.pageBreakBefore = 'always';
+        // Page break inside
+        if (/break-inside-avoid/.test(cls)) el.style.pageBreakInside = 'avoid';
+        // vertical align
+        if (/align-top/.test(cls)) el.style.verticalAlign = 'top';
+        // Hapus oklch/oklab colors dari inline style yang ada
+        const colorProps = ['color', 'backgroundColor', 'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'] as const;
         colorProps.forEach((prop) => {
-          const val = el.style[prop];
+          const val = (el.style as any)[prop];
           if (val && (val.includes('oklch') || val.includes('oklab') || val.includes('color('))) {
-            el.style[prop] = '';
+            (el.style as any)[prop] = '';
           }
         });
       });
-      // Hapus SVG icon dan tombol yang tidak relevan di dokumen
-      clone.querySelectorAll('svg, button').forEach((el) => el.remove());
 
-      const wordPageSize = config.orientation === 'portrait' ? '595.3pt 841.9pt' : '841.9pt 595.3pt';
-      const wordOrientation = config.orientation === 'landscape' ? 'mso-page-orientation: landscape;' : '';
-      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-        @page WordSection1 { size: ${wordPageSize}; margin: 28.35pt; ${wordOrientation} }
-        div.WordSection1 { page: WordSection1; }
-        html, body, div.WordSection1 { width: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 10pt; }
-        table { border-collapse: collapse; width: 100%; max-width: 100%; table-layout: fixed; }
-        th, td { white-space: normal; word-wrap: break-word; border: 1px solid black; padding: 4px; }
-        thead { display: table-header-group; }
-        tr { page-break-inside: avoid; }
-        .font-bold, th { font-weight: bold; }
-        .text-center { text-align: center; }
-        .text-justify { text-align: justify; }
-        .bg-gray-50 { background-color: #f9fafb; }
-        .bg-gray-100 { background-color: #f3f4f6; }
-        .bg-gray-200 { background-color: #e5e7eb; }
-        .underline { text-decoration: underline; }
-        .italic { font-style: italic; }
-        a { color: inherit; text-decoration: none; }
-      </style></head><body><div class="WordSection1">${clone.outerHTML}</div></body></html>`;
-      const rawBlob = htmlDocx.asBlob(html, {
-        orientation: config.orientation,
-        margins: { top: 567, right: 567, bottom: 567, left: 567 },
+      // Bersihkan table cells - hapus class Tailwind, pastikan border & width
+      clone.querySelectorAll('table').forEach((table: HTMLElement) => {
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
+        table.style.tableLayout = 'fixed';
       });
-      const blob = await patchDocxPageLayout(rawBlob, config.orientation);
-      downloadBlob(blob, `${config.filename}.docx`);
+      clone.querySelectorAll('th, td').forEach((cell: HTMLElement) => {
+        // Pertahankan width dari class Tailwind
+        const wMatch = (cell.getAttribute('class') || '').match(/w-\[(\d+(?:\.\d+)?)%\]/);
+        if (wMatch) cell.style.width = `${wMatch[1]}%`;
+        if (!cell.style.border) cell.style.border = '1px solid black';
+        if (!cell.style.padding) cell.style.padding = '4px';
+        cell.style.whiteSpace = 'normal';
+        cell.style.wordBreak = 'break-word';
+      });
+
+      const isLandscape = config.orientation === 'landscape';
+      const pageStyle = isLandscape
+        ? `@page WordSection1 { size: 841.9pt 595.3pt; mso-page-orientation: landscape; margin: 28.35pt; } div.WordSection1 { page: WordSection1; }`
+        : `@page WordSection1 { size: 595.3pt 841.9pt; margin: 28.35pt; } div.WordSection1 { page: WordSection1; }`;
+
+      const preHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'><title>${config.label}</title><style>
+${pageStyle}
+body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.4; }
+table { width: 100%; border-collapse: collapse; }
+th, td { border: 1px solid black; padding: 4px; vertical-align: top; white-space: normal; word-break: break-word; }
+th { font-weight: bold; background-color: #f3f4f6; }
+tr { page-break-inside: avoid; }
+thead { display: table-header-group; }
+a { color: inherit; text-decoration: none; }
+</style></head>
+<body><div class="WordSection1">`;
+      const postHtml = `</div></body></html>`;
+
+      const blob = new Blob(['\ufeff', preHtml + clone.innerHTML + postHtml], {
+        type: 'application/msword',
+      });
+      downloadBlob(blob, `${config.filename}.doc`);
     } catch (exportError) {
       console.error('Word export failed:', exportError);
       setError(`Ekspor Word ${config.label} gagal: ${exportError.message}`);
