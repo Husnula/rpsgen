@@ -1198,9 +1198,12 @@ ATURAN:
   const copyComputedStyles = (source, target) => {
     const properties = [
       'background-color', 'border', 'border-collapse', 'border-color', 'border-style',
-      'border-width', 'color', 'display', 'font-family', 'font-size', 'font-style',
-      'font-weight', 'height', 'line-height', 'margin', 'padding', 'text-align',
-      'text-decoration', 'vertical-align', 'white-space', 'width',
+      'border-width', 'border-top', 'border-right', 'border-bottom', 'border-left',
+      'color', 'display', 'font-family', 'font-size', 'font-style',
+      'font-weight', 'height', 'line-height', 'margin', 'margin-top', 'margin-bottom',
+      'padding', 'padding-top', 'padding-bottom', 'padding-left', 'padding-right',
+      'text-align', 'text-decoration', 'vertical-align', 'white-space', 'width',
+      'min-width', 'max-width', 'overflow', 'word-break', 'word-wrap',
     ];
     const computed = window.getComputedStyle(source);
     target.style.cssText = properties
@@ -1309,17 +1312,39 @@ ATURAN:
       clone.querySelectorAll('tr, .break-inside-avoid, .signature-block').forEach((node) => {
         node.style.pageBreakInside = 'avoid';
       });
+      // Sanitize oklch/oklab colors (Tailwind v4) yang tidak dipahami Word
+      const allElements = [clone, ...clone.querySelectorAll('*')];
+      const colorProps = ['color', 'backgroundColor', 'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'];
+      allElements.forEach((el: any) => {
+        colorProps.forEach((prop) => {
+          const val = el.style[prop];
+          if (val && (val.includes('oklch') || val.includes('oklab') || val.includes('color('))) {
+            el.style[prop] = '';
+          }
+        });
+      });
+      // Hapus SVG icon dan tombol yang tidak relevan di dokumen
+      clone.querySelectorAll('svg, button').forEach((el) => el.remove());
 
       const wordPageSize = config.orientation === 'portrait' ? '595.3pt 841.9pt' : '841.9pt 595.3pt';
       const wordOrientation = config.orientation === 'landscape' ? 'mso-page-orientation: landscape;' : '';
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
         @page WordSection1 { size: ${wordPageSize}; margin: 28.35pt; ${wordOrientation} }
         div.WordSection1 { page: WordSection1; }
-        html, body, div.WordSection1 { width: 100%; margin: 0; padding: 0; }
+        html, body, div.WordSection1 { width: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 10pt; }
         table { border-collapse: collapse; width: 100%; max-width: 100%; table-layout: fixed; }
-        th, td { white-space: normal; word-wrap: break-word; }
+        th, td { white-space: normal; word-wrap: break-word; border: 1px solid black; padding: 4px; }
         thead { display: table-header-group; }
         tr { page-break-inside: avoid; }
+        .font-bold, th { font-weight: bold; }
+        .text-center { text-align: center; }
+        .text-justify { text-align: justify; }
+        .bg-gray-50 { background-color: #f9fafb; }
+        .bg-gray-100 { background-color: #f3f4f6; }
+        .bg-gray-200 { background-color: #e5e7eb; }
+        .underline { text-decoration: underline; }
+        .italic { font-style: italic; }
+        a { color: inherit; text-decoration: none; }
       </style></head><body><div class="WordSection1">${clone.outerHTML}</div></body></html>`;
       const rawBlob = htmlDocx.asBlob(html, {
         orientation: config.orientation,
@@ -1904,7 +1929,7 @@ ATURAN:
                 <td className={`${td} font-bold bg-gray-50`}>Bahan Kajian / Materi Pembelajaran</td>
                 <td className={`${td} align-top`}>
                   <div className="space-y-1">
-                    {rpsData?.bahan_kajian?.map((item: string, idx: number) => <div key={idx} className="whitespace-pre-wrap text-left">{idx + 1}. {item.replace(/^\d+[\.\)]\s*/, '')}</div>)}
+                    {rpsData?.bahan_kajian?.map((item: string, idx: number) => <div key={idx} className="whitespace-pre-wrap text-left">{idx + 1}. {item.replace(/^\s*\d+[.\)\-:]\s*/, '').trim()}</div>)}
                   </div>
                 </td>
               </tr>
