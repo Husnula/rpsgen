@@ -58,8 +58,8 @@ import panduanRpsRaw from '../panduan-RPS-template.md?raw';
 // ============================================================
 // API KEY INJECTION 
 // ============================================================
-const callGemini = async (prompt: string, schema: any, apiKeys: string[], validate?: (data: any) => string | null) => {
-  const result = await callGeminiWithFallback(prompt, apiKeys, "default-user", { schema, validate, maxRetries: 3 });
+const callGemini = async (prompt: string, schema: any, apiKeys: string[], validate?: (data: any) => string | null, generationConfig?: any) => {
+  const result = await callGeminiWithFallback(prompt, apiKeys, "default-user", { schema, validate, maxRetries: 3, generationConfig });
   return result.data;
 };
 
@@ -913,6 +913,10 @@ Bentuk:
         required: ['rencana_tugas'],
       };
 
+      // Filter panduan: hanya kirim BAGIAN I+II (RTM) yang relevan untuk Tahap 3
+      // BAGIAN III (rubrik database) dan IV (studi kasus) tidak diperlukan, membuang token
+      const panduanRtmOnly = panduanRpsRaw.split('## BAGIAN III')[0].trim();
+
       const prompt3a = `Susun Rencana Tugas untuk MK ${formData.mkName}.
 CPMK resmi:
 ${cpmkListText}
@@ -922,8 +926,8 @@ ${subCpmkListText}
 
 Tugas Wajib: ${taskListText || 'Tidak ada tugas'}
 
-PANDUAN INSTITUSI STIKES (RTM & RUBRIK):
-${panduanRpsRaw}
+PANDUAN INSTITUSI STIKES (RTM):
+${panduanRtmOnly}
 
 ATURAN:
 1. Buat Rencana Tugas hanya untuk task_code yang ada, sesuaikan dengan TEMPLATE STANDAR RTM (Tipe A atau Tipe B) yang ada di Panduan.
@@ -939,21 +943,22 @@ ATURAN:
         const generatedTasks = new Set((data?.rencana_tugas || []).map((t: any) => t.task_code));
         
         if (generatedTasks.size !== allowedTaskCodes.size) {
-          return `Jumlah Rencana Tugas (RTM) tidak sesuai! Anda wajib membuat TEPAT ${allowedTaskCodes.size} rencana tugas untuk semua task_code berikut: ${Array.from(allowedTaskCodes).join(', ')}. Saat ini Anda hanya membuat ${generatedTasks.size} rencana tugas.`;
+          return `Jumlah RTM tidak sesuai! Wajib ${allowedTaskCodes.size} rencana tugas (${Array.from(allowedTaskCodes).join(', ')}). Sekarang ${generatedTasks.size}.`;
         }
 
         for (const task of (data?.rencana_tugas || [])) {
           if (!allowedTaskCodes.has(task.task_code)) {
-            return `task_code '${task.task_code}' tidak valid! Anda HANYA boleh membuat tugas untuk task_code berikut: ${Array.from(allowedTaskCodes).join(', ')}. Dilarang mengarang task_code baru.`;
+            return `task_code '${task.task_code}' tidak valid! Gunakan: ${Array.from(allowedTaskCodes).join(', ')}.`;
           }
           if (!allowedSubCpmkCodes.has(task.sub_cpmk_ref)) {
-            return `sub_cpmk_ref '${task.sub_cpmk_ref}' pada tugas ${task.task_code} tidak valid! Harus kode sub-cpmk yang ada, contoh: Sub-CPMK-1.`;
+            return `sub_cpmk_ref '${task.sub_cpmk_ref}' pada ${task.task_code} tidak valid.`;
           }
         }
         return null;
       };
 
-      const data3a = await callGemini(prompt3a, schema3a, apiKeys, validateData3a);
+      // Pakai maxOutputTokens 32768 agar JSON Rencana Tugas tidak terpotong
+      const data3a = await callGemini(prompt3a, schema3a, apiKeys, validateData3a, { temperature: 0.7, maxOutputTokens: 32768 });
       setDataPart3a(data3a);
       setGenProgress(3);
     } catch (err: any) {
