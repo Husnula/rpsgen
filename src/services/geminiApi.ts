@@ -4,10 +4,7 @@ const MODEL_CHAIN = [
   "gemini-2.5-flash",
   "gemini-2.5-flash-lite",
   "gemini-3-flash",
-  "gemini-3.1-flash-lite",
-  "gemini-3.5-flash",
-  "gemini-3.5-flash-lite",
-  "gemini-3.7-flash"
+  "gemini-3.5-flash"
 ];
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -91,13 +88,22 @@ export const callGeminiWithFallback = async (prompt: string, apiKeys: string[], 
             let parsedData = null;
             if (config.schema) {
               try {
-                const cleanText = text.replace(/```json\n|\n```/g, '');
+                let cleanText = text.trim();
+                if (cleanText.startsWith("```")) {
+                  const match = cleanText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                  if (match) {
+                    cleanText = match[1];
+                  } else {
+                    cleanText = cleanText.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+                  }
+                }
                 parsedData = JSON.parse(cleanText);
               } catch (e) {
                 const errMsg = "Format respons tidak valid/terpotong";
                 attempts.push(`${tag} (att ${attempt}) → exception: ${errMsg}`);
                 console.warn(`[Gemini API] ${tag} att ${attempt} exception: ${errMsg}`);
-                await delay(800 * attempt);
+                console.warn(`[Gemini API] Failed text snippet: ${text.substring(0, 200)}...`);
+                await delay(300 * attempt);
                 continue; // Retry same model
               }
 
