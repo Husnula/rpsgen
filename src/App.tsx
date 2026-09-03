@@ -683,29 +683,30 @@ TUGAS:
         if (data?.cpmk) {
           const usedCpls = new Set();
           data.cpmk.forEach((c: any) => (c.cpl_terkait || []).forEach((cpl: any) => usedCpls.add(cpl)));
-          if (usedCpls.size !== 4) {
-            return `PENTING: Anda WAJIB menggunakan TEPAT 4 CPL-PRODI yang berbeda. Saat ini Anda menggunakan ${usedCpls.size} CPL. Kurangi atau tambah pilihan CPL Anda hingga jumlahnya pas 4!`;
+          // Terima 3-5 CPL (bukan harus tepat 4) untuk menghindari retry berulang
+          if (usedCpls.size < 3 || usedCpls.size > 5) {
+            return `Gunakan 3-5 CPL-PRODI berbeda. Sekarang ${usedCpls.size} CPL.`;
           }
         }
         
         if (!data?.pustaka?.pendukung || data.pustaka.pendukung.length === 0 || (data.pustaka.pendukung.length === 1 && data.pustaka.pendukung[0].trim() === '')) {
-          return "Pustaka Pendukung TIDAK BOLEH KOSONG. Harap berikan minimal 2 referensi tambahan!";
+          return "Pustaka Pendukung wajib diisi minimal 2 referensi.";
         }
 
         const nonOperationalOpening = /^\s*(?:mahasiswa\s+mampu\s+)?(?:menguasai|memahami|mengetahui)\b/i;
         for (const outcome of [...(data.cpmk || []), ...(data.sub_cpmk || [])]) {
           if (nonOperationalOpening.test(outcome.teks || '')) {
-            return `${outcome.kode} harus diawali KKO yang dapat diamati/diukur, bukan "menguasai/memahami/mengetahui".`;
+            return `${outcome.kode}: gunakan KKO terukur, bukan "menguasai/memahami/mengetahui".`;
           }
         }
         for (const outcome of (data.cpmk || [])) {
           if (/^\s*mahasiswa/i.test(outcome.teks || '')) {
-            return `${outcome.kode} JANGAN diawali dengan kata "Mahasiswa", langsung saja mulai dengan "Mampu ...".`;
+            return `${outcome.kode}: CPMK jangan diawali "Mahasiswa", mulai dengan "Mampu ...".`;
           }
         }
         for (const outcome of (data.sub_cpmk || [])) {
           if (!/^\s*mahasiswa\s+mampu/i.test(outcome.teks || '')) {
-            return `${outcome.kode} WAJIB diawali dengan kata "Mahasiswa mampu".`;
+            return `${outcome.kode}: Sub-CPMK wajib diawali "Mahasiswa mampu".`;
           }
         }
         return null;
