@@ -3,11 +3,12 @@ const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models
 const MODEL_CHAIN = [
   "gemini-2.5-flash",
   "gemini-2.5-flash-lite",
-  "gemini-3-flash",
-  "gemini-3.5-flash"
+  "gemini-2.0-flash",
+  "gemini-1.5-flash"
 ];
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 
 const StateManager = {
   getStickyState: (userId: string) => {
@@ -43,7 +44,7 @@ export const callGeminiWithFallback = async (prompt: string, apiKeys: string[], 
   }
 
   const attempts: string[] = [];
-  const generationConfig: any = config.generationConfig || { temperature: 0.7, maxOutputTokens: 8192 };
+  const generationConfig: any = config.generationConfig || { temperature: 0.7, maxOutputTokens: 16384 };
   if (config.schema) {
     generationConfig.responseMimeType = "application/json";
     generationConfig.responseSchema = config.schema;
@@ -140,9 +141,12 @@ export const callGeminiWithFallback = async (prompt: string, apiKeys: string[], 
             // Pindah langsung ke model selanjutnya dalam chain
             break; 
           }
-          if ([503, 404, 500].includes(code)) {
+          if ([503, 500].includes(code)) {
             await delay(1000 * attempt); 
             continue; // Retry same model
+          }
+          if (code === 404) {
+            break; // Model tidak ada, langsung pindah ke model berikutnya
           }
 
           // Other errors, break retry loop and try next model
